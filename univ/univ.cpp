@@ -350,7 +350,7 @@ std::string Sloong::Universal::CUniversal::BinaryToHex(const unsigned char* buf,
 	return NewString;
 }
 
-int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSize, int nStart, bool eagain)
+int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSize, int nStart, bool bAgain)
 {
 	int nAllSent = nStart;
 	int nSentSize = nStart;
@@ -367,18 +367,25 @@ int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSi
 			return -1;
 #else
 			// if errno != EAGAIN or again for error and return is -1, return false
-			if (errno == EAGAIN && eagain == true)
-				continue;
-			else if (errno == SIGPIPE)
-				return -1;
+			if (errno == EAGAIN || errno == EINTR )
+			{
+				if( bAgain == true && nSentSize > 0 )
+					continue;
+				else if(bAgain == false &&nSentSize > 0)
+					return nSentSize;
+				else
+					return 0-errno;
+			}
 			else
-				return nAllSent;
+			{
+					return 0-errno;
+			}
 #endif // _WINDOWS
 		}
 		// socket is closed
 		else if ( nSentSize == 0 )
 		{
-			return -1;
+			return -200;
 		}
 
 		nNosendSize -= nSentSize;
@@ -423,29 +430,30 @@ int Sloong::Universal::CUniversal::RecvEx(int sock, char * buf, int nSize, int n
 				if (errno == EAGAIN || errno == EINTR)
 				{
 					// If bAgain as true, and was receiving data, retry again.
-					if (bAgain == true && nIsRecv != 0){
+					if (bAgain == true && nIsRecv > 0)
 						continue;
-					}else{
-						return -1;
-					}
+					else if (bAgain == false && nIsRecv > 0)
+						return nIsRecv
+					else
+						return 0-errno;
 				}
 				// In other erros case, return directly.
 				else
 				{
-					return -1;
+					return 0-errno;
 				}
 #endif // _WINDOWS
 			}
 			// socket is closed
 			else if ( nRecv == 0 )
 			{
-				return -1;
+				return -200;
 			}
 		}
 		else
 		{
 			// other error
-			return -1;
+			return -200-errno;
 		}
 		nNoRecv -= nRecv;
 		nIsRecv += nRecv;

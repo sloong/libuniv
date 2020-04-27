@@ -120,16 +120,18 @@ namespace Sloong
 				buf		-> the data buffer
 				nSize	-> the send size
 				nStart	-> the offset for the start index.
-				eagain	-> continue when the EINTR,EAGAIN error if value is true.
+				bAgain	-> continue when the EINTR,EAGAIN error if value is true.
 							else return direct. in default is false.  *Only LinuxOS
 			Return:
-				If succeed, return the sent data length. it always bigger than 0.
-				If timeout, return 0.
-				If have EINTR\EAGAIN error, and the param 'eagain' as true, return 0. 
-				If have other error, return -1.
+				> 0 : The sent data length. it always bigger than 0. but may not same as nSize.
+				0 : Timeout. (Now no used)
+				-1 - -199 : send function return an error. the value is Negative of the errno.
+				-200 : socket is closed. (send function return 0)
+			Note:
+				If 'bAgain' as true, some data was sent, and in next time happened EINTR\EAGAIN error, function will into the loop until all data send succeed or other error happened.
 			*/
 			/************************************************************************/
-			static int SendEx(SOCKET sock, const char* buf, int nSize, int nStart=0, bool eagain=false);
+			static int SendEx(SOCKET sock, const char* buf, int nSize, int nStart=0, bool bAgain=false);
 			/************************************************************************/
 			/*		ReceEx function.
 			Params:
@@ -137,15 +139,18 @@ namespace Sloong
 				buf		-> the data buffer
 				nSize	-> the receive size
 				nTimeout-> timeout time, default is 0. no need timeout
-				eagain	-> continue when the EINTR,EAGAIN error if value is true.
+				bAgagin	-> continue when the EINTR,EAGAIN error if value is true.
 							else return direct. in default is false.    *Only LinuxOS
 			Return:
-				If succeed, return value same as the nSize param.
-				If timeout, return received data length. it less than nSize and bigger than 0.
-				If have EINTR\EAGAIN error, and received data length is 0, return -1.
-				If have EINTR\EAGAIN error, and param 'bAgain' as false, return -1.
-				If have EINTR\EAGAIN error, and param 'bAgain' as true, and receive data length bigger than 0, no return and retry again. until happened other case.
-				If have other error, return -1.
+				> 0 & = nSize : Send succeed, return value is the recv data length.
+				> 0 & < nSize : Receive partial success. return received data length. it less than nSize and bigger than 0.
+				= 0 : Timeout.(select function return 0)
+				-1 - -199 : recv function return an error. the value is Negative of the errno.
+				-200 : socket is closed. (recv function return 0)
+				-201 - -400: select function return an error. the value is (-200-errno).
+			
+			Note:
+				If 'bAgain' as true, recved some data, and in next time happened EINTR\EAGAIN error, function will into a loop until all data received or other error happened.
 			*/
 			/************************************************************************/
 			static int RecvEx(int sock, char* buf, int nSize, int nTimeout, bool bAgain = false );
