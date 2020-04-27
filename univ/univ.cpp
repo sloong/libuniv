@@ -360,8 +360,7 @@ int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSi
 	{
 		nSentSize = send(sock, buf + nSize - nNosendSize, nNosendSize, 0);
 
-#define SOCKET_ERROR            (-1)
-		if (nSentSize == SOCKET_ERROR)
+		if (nSentSize < 0)
 		{
 #ifdef _WINDOWS
 			return -1;
@@ -394,7 +393,54 @@ int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSi
 	return nAllSent;
 }
 
-int Sloong::Universal::CUniversal::RecvEx(int sock, char * buf, int nSize, int nTimeout, bool bAgain)
+int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char * buf, int nSize, bool bAgain)
+{
+	if (nSize <= 0)
+		return 0;
+
+	int nIsRecv = 0;
+	int nNoRecv = nSize;
+	int nRecv = 0;
+	char* pBuf = buf;
+	while (nIsRecv < nSize)
+	{
+		nRecv = recv(sock, pBuf + nSize - nNoRecv, nNoRecv, 0);
+		if (nRecv < 0)
+		{
+#ifdef _WINDOWS
+			return -1;
+#else
+			// On non-blocking mode, socket will make EAGAIN and EINTR two erros,
+			// but these two erros should no be returned directly.
+			if (errno == EAGAIN || errno == EINTR)
+			{
+				// If bAgain as true, and was receiving data, retry again.
+				if (bAgain == true && nIsRecv > 0)
+					continue;
+				else if (bAgain == false && nIsRecv > 0)
+					return nIsRecv;
+				else
+					return 0-errno;
+			}
+			// In other erros case, return directly.
+			else
+			{
+				return 0-errno;
+			}
+#endif // _WINDOWS
+		}
+		// socket is closed
+		else if ( nRecv == 0 )
+		{
+			return -200;
+		}
+		nNoRecv -= nRecv;
+		nIsRecv += nRecv;
+	}
+	return nIsRecv;
+}
+
+int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSize, int nTimeout, bool bAgain)
 {
 	if (nSize <= 0)
 		return 0;
