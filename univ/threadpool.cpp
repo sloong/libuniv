@@ -44,7 +44,11 @@ void Sloong::Universal::CThreadPool::ThreadWorkLoop()
 		{
 			if (m_emStatus == RUN_STATUS::Created)
 			{
-				SLEEP(1000);
+#ifdef _WINDOWS
+				Sleep(100);
+#else
+				usleep(990000);
+#endif
 				continue;
 			}
 			// each 1 second check the list once.
