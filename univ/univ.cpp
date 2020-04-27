@@ -433,7 +433,7 @@ int Sloong::Universal::CUniversal::RecvEx(int sock, char * buf, int nSize, int n
 					if (bAgain == true && nIsRecv > 0)
 						continue;
 					else if (bAgain == false && nIsRecv > 0)
-						return nIsRecv
+						return nIsRecv;
 					else
 						return 0-errno;
 				}
