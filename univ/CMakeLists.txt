@@ -4,12 +4,7 @@ project(univ)
 
 include_directories(
     "$(PROJECT_BINARY_DIR)"
-    "/usr/include/glib-2.0"
     "/usr/include/lua5.3"
-	# ubuntu path
-    "/usr/lib/x86_64-linux-gnu/glib-2.0/include"
-	# centos path
-	"/usr/lib64/glib-2.0/include"
 )
 
 #允许gdb调试
@@ -40,4 +35,3 @@ add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
 
 target_link_libraries(${PROJECT_NAME} crypto)
 target_link_libraries(${PROJECT_NAME} lua5.3)
-target_link_libraries(${PROJECT_NAME} boost_serialization)

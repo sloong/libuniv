@@ -7,11 +7,6 @@
 #include "log.h"
 #include <iostream>
 
-#include <boost/serialization/map.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
 #define LOCK_GUARD(m) {lock_guard<mutex> lck(m);}
 
 
@@ -150,15 +145,7 @@ bool CLuaPacket::Exist(string key)
     }
 }
 
-//binary_iarchive
-void CLuaPacket::ParseFromString( string& str )
-{
-    std::stringstream ss;
-    ss << str;
-    boost::archive::text_iarchive iarch(ss);
-    //boost::archive::binary_iarchive iarch(ss);
-    iarch >> m_oDataMap;
-}
+
 
 int Sloong::Universal::CLuaPacket::IsChanged()
 {
@@ -169,16 +156,24 @@ void Sloong::Universal::CLuaPacket::ConfirmChange()
 {
 	m_oChangeList->clear();
 }
- 
-
+ /*
+//binary_iarchive
+void CLuaPacket::ParseFromString( string& str )
+{
+    std::stringstream ss;
+    ss << str;
+    //boost::archive::text_iarchive iarch(ss);
+    //boost::archive::binary_iarchive iarch(ss);
+    //iarch >> m_oDataMap;
+}
 //binary_oarchive
 string CLuaPacket::SerializeToString()
 {
     std::stringstream ss;
-    boost::archive::text_oarchive oarch(ss);
+    //boost::archive::text_oarchive oarch(ss);
     //boost::archive::binary_oarchive oarch(ss);
-    oarch << m_oDataMap;
+    //oarch << m_oDataMap;
     return ss.str();
-}
+}*/
 
 

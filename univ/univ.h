@@ -26,8 +26,7 @@
 #include <mutex>
 using namespace std;
 #include <stdarg.h> // for va_list,va_start and va_end
-#include <boost/format.hpp>
-#include <boost/foreach.hpp>
+#include <algorithm>
 #include "defines.h"
 #define	ACC_R	4		/* Test for read permission.  */
 #define	ACC_W	2		/* Test for write permission.  */
@@ -183,59 +182,20 @@ namespace Sloong
                 return ss.str();
             }
 
-            // packaging the boost::format;
-            template<class TFirst>
-            static void Format(boost::format& fmt, TFirst&& first) {  fmt % first; }
-
-            template<class TFirst>
-            static string Format(const char* format, TFirst&& first)
+            static string Format(const char *fmt, ...)
             {
-                boost::format fmt(format);
-                Format(fmt, first);
-                return fmt.str();
+               va_list ap;
+				va_start(ap, fmt);
+				int len = vsnprintf(nullptr, 0, fmt, ap);
+				va_end(ap);
+				std::string buf(len+1, '\0');
+				va_start(ap, fmt);
+				vsnprintf(&buf[0], buf.size(), fmt, ap);
+				va_end(ap);
+				buf.pop_back();
+				return buf;
             }
 
-            template<class TFirst, class... TOther>
-            static void Format(boost::format& fmt, TFirst&& first, TOther&&... other)
-            {
-                fmt % first;
-                Format(fmt, other...);
-            }
-
-            template<class TFirst, class... TOther>
-            static string Format(const char* format, TFirst&& first, TOther&&... other)
-            {
-                boost::format fmt(format);
-                Format(fmt, first, other...);
-                return fmt.str();
-            }
-
-			// packaging the boost::wformat;
-			template<class TFirst>
-			static void Format(boost::wformat& fmt, TFirst&& first) { fmt % first; }
-
-			template<class TFirst>
-			static wstring Format(const wchar_t* format, TFirst&& first)
-			{
-				boost::wformat fmt(format);
-				Format(fmt, first);
-				return fmt.str();
-			}
-
-			template<class TFirst, class... TOther>
-			static void Format(boost::wformat& fmt, TFirst&& first, TOther&&... other)
-			{
-				fmt % first;
-				Format(fmt, other...);
-			}
-
-			template<class TFirst, class... TOther>
-			static wstring Format(const wchar_t* format, TFirst&& first, TOther&&... other)
-			{
-				boost::wformat fmt(format);
-				Format(fmt, first, other...);
-				return fmt.str();
-			}
 
             static void tolower(string& str)
             {

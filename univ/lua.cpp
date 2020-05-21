@@ -1,9 +1,7 @@
 #include "stdafx.h"
 #include "lua.h"
 #include "exception.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <boost/foreach.hpp>
+#include "univ.h"
 #ifdef _WINDOWS
 #include <io.h>
 #endif // _WINDOWS
@@ -64,7 +62,7 @@ std::string CLua::findScript(std::string strFullName)
     for (int i = 0; i< len; i++)
 	{
         testFile = CUniversal::Replace(CUniversal::Replace(g_SearchList[i], "%pathdir%", m_strScriptFolder), "%filename%", strFullName);
-		if (0 == access(testFile.c_str(), ACC_R))
+		if (0 == ACCESS(testFile.c_str(), ACC_R))
 		{
 			res = testFile;
 			break;
@@ -209,7 +207,7 @@ bool CLua::AddFunction(std::string pFunctionName, LuaFunctionType pFunction)
 
 void CLua::AddFunctions(vector<LuaFunctionRegistr> *pFuncList)
 {
-    BOOST_FOREACH( LuaFunctionRegistr item, *pFuncList)
+    for( auto item: *pFuncList)
     {
         AddFunction(item.strFunctionName,item.pFunction);
     }
@@ -274,16 +272,14 @@ void CLua::PushDouble(double value)
 
 bool CLua::RunFunction(std::string strFunctionName, std::string args)
 {
-	std::string cmd = (boost::format("%1%(%2%)") % strFunctionName % args).str();
-	return RunString(cmd);
+	return RunString(CUniversal::Format("%s(%s)",strFunctionName,args));
 }
 
 void CLua::HandlerError(std::string strErrorType, std::string strCmd)
 {
 	if (m_pErrorHandler)
 	{
-		std::string msg = (boost::format("\n Error - %1%:\n %2%\n Error Message:%3%") % strErrorType % strCmd % GetErrorString()).str();
-		m_pErrorHandler(msg);
+		m_pErrorHandler(CUniversal::Format("\n Error - %s:\n %s\n Error Message:%s%",strErrorType , strCmd , GetErrorString()));
 	}
 }
 

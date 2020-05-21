@@ -9,26 +9,6 @@
 #include "version.h"
 #include <assert.h>
 #include "exception.h"
-#ifndef _WINDOWS
-#include <libgen.h>
-#include <stdarg.h>  
-#include <sys/stat.h>  
-#include <signal.h>
-//#include <libzip.h>
-#define ACCESS access  
-#define MKDIR(a) mkdir((a),0755)  
-#else
-#include <direct.h>  
-#include <io.h>  
-#define ACCESS _access  
-#define MKDIR(a) _mkdir((a))  
-#define F_OK	0
-#define W_OK	2
-#define R_OK	4
-#define X_OK	6
-#endif // !_WINDOWS
-
-
 
 using namespace std;
 using namespace Sloong::Universal;
