@@ -36,7 +36,7 @@ string CMD5::Encode(string str, bool bFile /*= false*/)
 	unsigned char md5[MD5_LENGTH] = { 0 };
 
 	Binary_Encode(str, md5, bFile);
-	return CUniversal::BinaryToHex(md5, MD5_LENGTH);
+	return Helper::BinaryToHex(md5, MD5_LENGTH);
 }
 
 
@@ -45,7 +45,7 @@ string Sloong::Universal::CSHA1::Encode(string str_src, bool file )
 {
 	unsigned char mdStr[SHA1_LENGTH] = { 0 };
 	Binary_Encoding(str_src, mdStr);
-	return CUniversal::BinaryToHex(mdStr, SHA1_LENGTH);
+	return Helper::BinaryToHex(mdStr, SHA1_LENGTH);
 }
 
 void Sloong::Universal::CSHA1::Binary_Encoding(const string& str_src, unsigned char(&md)[SHA1_LENGTH], bool bFile )
@@ -77,7 +77,7 @@ string Sloong::Universal::CSHA256::Encode(string str_src, bool file )
 {
 	unsigned char mdStr[SHA256_LENGTH] = { 0 };
 	Binary_Encoding(str_src, mdStr);
-	return CUniversal::BinaryToHex(mdStr, SHA256_LENGTH);
+	return Helper::BinaryToHex(mdStr, SHA256_LENGTH);
 }
 
 void Sloong::Universal::CSHA256::Binary_Encoding(const string& str_src, unsigned char(&md)[SHA256_LENGTH], bool bFile )
@@ -108,7 +108,7 @@ string Sloong::Universal::CSHA512::Encode(string str_src, bool file)
 {
 	unsigned char mdStr[SHA512_LENGTH] = { 0 };
 	Binary_Encoding(str_src, mdStr);
-	return CUniversal::BinaryToHex(mdStr, SHA512_LENGTH);
+	return Helper::BinaryToHex(mdStr, SHA512_LENGTH);
 }
 
 void Sloong::Universal::CSHA512::Binary_Encoding(const string & str_src, unsigned char(&md)[SHA512_LENGTH], bool bFile)

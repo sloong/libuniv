@@ -61,7 +61,7 @@ std::string CLua::findScript(std::string strFullName)
 	int len = g_SearchList.size();
     for (int i = 0; i< len; i++)
 	{
-        testFile = CUniversal::Replace(CUniversal::Replace(g_SearchList[i], "%pathdir%", m_strScriptFolder), "%filename%", strFullName);
+        testFile = Helper::Replace(Helper::Replace(g_SearchList[i], "%pathdir%", m_strScriptFolder), "%filename%", strFullName);
 		if (0 == ACCESS(testFile.c_str(), ACC_R))
 		{
 			res = testFile;
@@ -272,14 +272,14 @@ void CLua::PushDouble(double value)
 
 bool CLua::RunFunction(std::string strFunctionName, std::string args)
 {
-	return RunString(CUniversal::Format("%s(%s)",strFunctionName,args));
+	return RunString(Helper::Format("%s(%s)",strFunctionName.c_str(),args.c_str()));
 }
 
 void CLua::HandlerError(std::string strErrorType, std::string strCmd)
 {
 	if (m_pErrorHandler)
 	{
-		m_pErrorHandler(CUniversal::Format("\n Error - %s:\n %s\n Error Message:%s%",strErrorType , strCmd , GetErrorString()));
+		m_pErrorHandler(Helper::Format("\n Error - %s:\n %s\n Error Message:%s%",strErrorType.c_str() , strCmd.c_str() , GetErrorString().c_str()));
 	}
 }
 

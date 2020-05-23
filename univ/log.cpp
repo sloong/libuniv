@@ -37,9 +37,9 @@ Sloong::Universal::CLog::~CLog()
 }
 
 
-void Sloong::Universal::CLog::Log(std::string strErrorText, string strTitle, DWORD dwCode /* = 0 */, bool bFormatSysMsg /* = false */)
+void Sloong::Universal::CLog::Log(const string& strErrorText, const string& strTitle, DWORD dwCode /* = 0 */, bool bFormatSysMsg /* = false */)
 {
-    WriteLine(CUniversal::Format("[%s]:[%s]", strTitle, strErrorText));
+    WriteLine(Helper::Format("[%s]:[%s]", strTitle.c_str(), strErrorText.c_str()));
 		
 	if (bFormatSysMsg)
 	{
@@ -55,7 +55,7 @@ void Sloong::Universal::CLog::Log(std::string strErrorText, string strTitle, DWO
 #endif
 		if (0 != dwSysCode)
 		{
-			std::string str = CUniversal::Format("[SYS CODE]:[%d];[SYSTEM MESSAGE]:[%s]", dwSysCode, errMsg.c_str());
+			string str = Helper::Format("[SYS CODE]:[%d];[SYSTEM MESSAGE]:[%s]", dwSysCode, errMsg.c_str());
 			WriteLine(str);
 		}
 	}
@@ -63,7 +63,7 @@ void Sloong::Universal::CLog::Log(std::string strErrorText, string strTitle, DWO
 }
 
 
-void Sloong::Universal::CLog::Log(std::string strErrorText, LOGLEVEL level)
+void Sloong::Universal::CLog::Log(const string& strErrorText, LOGLEVEL level)
 {
 	switch (level)
 	{
@@ -93,7 +93,7 @@ void Sloong::Universal::CLog::Log(std::string strErrorText, LOGLEVEL level)
 	}
 }
 
-void Sloong::Universal::CLog::WriteLine(std::string szLog)
+void Sloong::Universal::CLog::WriteLine(const string& szLog)
 {
 	if (szLog.empty())
 		return;
@@ -101,11 +101,11 @@ void Sloong::Universal::CLog::WriteLine(std::string szLog)
 	time_t st;
     time(&st);
 	struct tm* lt = localtime(&st);
-	Write(CUniversal::Format("[%d/%d/%d-%.2d:%.2d:%.2d]:%s\n",(lt->tm_year + 1900) , lt->tm_mon , lt->tm_mday ,
-		lt->tm_hour, lt->tm_min, lt->tm_sec,szLog));
+	Write(Helper::Format("[%d/%d/%d-%.2d:%.2d:%.2d]:%s\n",(lt->tm_year + 1900) , lt->tm_mon , lt->tm_mday ,
+		lt->tm_hour, lt->tm_min, lt->tm_sec,szLog.c_str()));
 }
 
-void Sloong::Universal::CLog::Write(std::string szMessage)
+void Sloong::Universal::CLog::Write(const string& szMessage)
 {
 	unique_lock <mutex> list_lock(m_oLogListMutex);
 	m_waitWriteList.push(szMessage);
@@ -211,7 +211,7 @@ void Sloong::Universal::CLog::RegisterCustomFunction( pCustomLogFunction func )
 	}
 }
 
-std::string Sloong::Universal::CLog::GetFileName()
+string Sloong::Universal::CLog::GetFileName()
 {
 	return m_szFileName;
 }
@@ -234,7 +234,7 @@ bool Sloong::Universal::CLog::IsOpen()
 			char szCurrentDate[10];
 			static const char format[3][10] = { ("%Y"), ("%Y-%m"), ("%Y%m%d") };
 			strftime(szCurrentDate, 9, format[m_emType], tmNow);
-			m_szFileName = CUniversal::Format("%s%s%s.log", m_szFilePath, szCurrentDate, m_strExtendName);
+			m_szFileName = Helper::Format("%s%s%s.log", m_szFilePath.c_str(), szCurrentDate, m_strExtendName.c_str());
 			m_nLastDate = tmNow->tm_mday;
 			Close();
 		}
@@ -269,7 +269,7 @@ void Sloong::Universal::CLog::End()
 }
 
 
-std::string Sloong::Universal::CLog::GetPath()
+string Sloong::Universal::CLog::GetPath()
 {
 	return m_szFilePath;
 }
@@ -285,26 +285,25 @@ void Sloong::Universal::CLog::Flush()
 		fflush(m_pFile);
 }
 
-void CLog::SetConfiguration(std::string szFileName, LOGTYPE* pType, LOGLEVEL* pLevel, LOGOPT* pOpt , string* strExtendName )
+void CLog::SetConfiguration(const string& szFileName, const string& strExtendName , LOGTYPE* pType, LOGLEVEL* pLevel, LOGOPT* pOpt )
 {
 	if (pType)
 	{
 		m_emType = *pType;
-		WriteLine(CUniversal::Format("[Info]:[Set log file type to %d]",m_emType));
+		WriteLine(Helper::Format("[Info]:[Set log file type to %d]",m_emType));
 	}
 
 	if (!szFileName.empty())
 	{
 		if ( m_emType != LOGTYPE::ONEFILE)
 		{
-			szFileName = CUniversal::replace(szFileName, "/", CUniversal::ntos(PATH_SEPARATOR));
-			szFileName = CUniversal::replace(szFileName, "\\", CUniversal::ntos(PATH_SEPARATOR));
-			char pLast = szFileName.c_str()[szFileName.length() - 1];
+			m_szFilePath = Helper::Replace(szFileName, "/", Helper::ntos(PATH_SEPARATOR));
+			m_szFilePath = Helper::Replace(szFileName, "\\", Helper::ntos(PATH_SEPARATOR));
+			char pLast = m_szFilePath.c_str()[m_szFilePath.length() - 1];
 			if (pLast != PATH_SEPARATOR)
 			{
-				szFileName += PATH_SEPARATOR;
+				m_szFilePath += PATH_SEPARATOR;
 			}
-			m_szFilePath = szFileName;
 		}
 		else
 		{
@@ -314,23 +313,23 @@ void CLog::SetConfiguration(std::string szFileName, LOGTYPE* pType, LOGLEVEL* pL
 		}
 	}
 
-	if( strExtendName)
+	if( strExtendName.size() > 0 )
 	{
-		m_strExtendName = *strExtendName;
-		WriteLine(CUniversal::Format("[Info]:[Set extend name to %d]",m_strExtendName));
+		m_strExtendName = strExtendName;
+		WriteLine(Helper::Format("[Info]:[Set extend name to %d]",m_strExtendName));
 	}
 	
 
 	if (pLevel)
 	{
 		m_emLevel = *pLevel;
-		WriteLine(CUniversal::Format("[Info]:[Set log level to %d]",m_emLevel));
+		WriteLine(Helper::Format("[Info]:[Set log level to %d]",m_emLevel));
 	}
 
 	if( pOpt )
 	{
 		m_emOperation = *pOpt;
-		WriteLine(CUniversal::Format("[Info]:[Set Operation to %d]",m_emOperation));
+		WriteLine(Helper::Format("[Info]:[Set Operation to %d]",m_emOperation));
 	}
 
 }
@@ -340,14 +339,14 @@ void Sloong::Universal::CLog::Initialize()
 	Initialize("./log.log");
 }
 
-void Sloong::Universal::CLog::Initialize(string szPathName, string strExtendName /*= ""*/, LOGOPT emOpt /*= WriteToFile */, LOGLEVEL emLevel /*= LOGLEVEL::All*/, LOGTYPE emType /*= LOGTYPE::ONEFILE*/)
+void Sloong::Universal::CLog::Initialize(const string& szPathName, const string& strExtendName /*= ""*/, LOGOPT emOpt /*= WriteToFile */, LOGLEVEL emLevel /*= LOGLEVEL::All*/, LOGTYPE emType /*= LOGTYPE::ONEFILE*/)
 {
 	// All value init
 	m_bInit = true;
 	m_szFilePath.clear();
 	m_szFileName.clear();
-	
-    SetConfiguration( szPathName, &emType, &emLevel, &emOpt, &strExtendName);
+
+    SetConfiguration( szPathName, strExtendName, &emType, &emLevel, &emOpt );
 
 	Start();
 }
@@ -368,42 +367,42 @@ void Sloong::Universal::CLog::Start()
 	WriteLine(g_strStart);
 }
 
-void Sloong::Universal::CLog::Info(std::string strMsg)
+void Sloong::Universal::CLog::Info(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Info)
 		return;
 	Log(strMsg, "Info");
 }
 
-void Sloong::Universal::CLog::Warn(std::string strMsg)
+void Sloong::Universal::CLog::Warn(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Warn)
 		return;
 	Log(strMsg, "Warn");
 }
 
-void Sloong::Universal::CLog::Error(std::string strMsg)
+void Sloong::Universal::CLog::Error(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Error)
 		return;
 	Log(strMsg, "Error");
 }
 
-void Sloong::Universal::CLog::Assert(std::string strMsg)
+void Sloong::Universal::CLog::Assert(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Assert)
 		return;
 	Log(strMsg, "Assert");
 }
 
-void Sloong::Universal::CLog::Fatal(std::string strMsg)
+void Sloong::Universal::CLog::Fatal(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Fatal)
 		return;
 	Log(strMsg, "Fatal");
 }
 
-void Sloong::Universal::CLog::Verbos(std::string strMsg)
+void Sloong::Universal::CLog::Verbos(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Verbos)
 		return;
@@ -411,7 +410,7 @@ void Sloong::Universal::CLog::Verbos(std::string strMsg)
 }
 
 
-void Sloong::Universal::CLog::Debug(std::string strMsg)
+void Sloong::Universal::CLog::Debug(const string& strMsg)
 {
 	if (m_emLevel > LOGLEVEL::Debug)
 		return;

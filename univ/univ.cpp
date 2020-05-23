@@ -43,102 +43,6 @@ void CUniversal::CopyStringToPoint(LPWSTR& lpTarget, LPCWSTR lpFrom)
 }
 
 
-
-string CUniversal::trim(const string& str)
-{
-	string::size_type pos = str.find_first_not_of(' ');
-	if (pos == string::npos)
-	{
-		return str;
-	}
-	string::size_type pos2 = str.find_last_not_of(' ');
-	if (pos2 != string::npos)
-	{
-		return str.substr(pos, pos2 - pos + 1);
-	}
-	return str.substr(pos);
-}
-
-wstring CUniversal::trim(const wstring& str)
-{
-	wstring::size_type pos = str.find_first_not_of(' ');
-	if (pos == string::npos)
-	{
-		return str;
-	}
-	wstring::size_type pos2 = str.find_last_not_of(' ');
-	if (pos2 != string::npos)
-	{
-		return str.substr(pos, pos2 - pos + 1);
-	}
-	return str.substr(pos);
-}
-
-vector<string> CUniversal::split(const string& str, const char& sep)
-{
-	vector<string> res;
-	if (str.empty())
-	{
-		return res;
-	}
-	string buff{ "" };
-
-	for (auto n : str)
-	{
-		if (n != sep)
-			buff += (n); 
-		else if (n == sep) 
-		{ 
-			res.push_back(buff); 
-			buff = (""); 
-		}
-	}
-	res.push_back(buff);
-	
-	return res;
-}
-
-string CUniversal::replace(const string& str, const string& src, const string& dest)
-{
-	string ret;
-
-	string::size_type pos_begin = 0;
-	string::size_type pos = str.find(src);
-	while (pos != string::npos)
-	{
-		ret.append(str.data() + pos_begin, pos - pos_begin);
-		ret += dest;
-		pos_begin = pos + 1;
-		pos = str.find(src, pos_begin);
-	}
-	if (pos_begin < str.length())
-	{
-		ret.append(str.begin() + pos_begin, str.end());
-	}
-	return ret;
-}
-
-
-wstring CUniversal::replace(const wstring& str, const wstring& src, const wstring& dest)
-{
-	wstring ret;
-
-	wstring::size_type pos_begin = 0;
-	wstring::size_type pos = str.find(src);
-	while (pos != string::npos)
-	{
-		ret.append(str.data() + pos_begin, pos - pos_begin);
-		ret += dest;
-		pos_begin = pos + 1;
-		pos = str.find(src, pos_begin);
-	}
-	if (pos_begin < str.length())
-	{
-		ret.append(str.begin() + pos_begin, str.end());
-	}
-	return ret;
-}
-
 /*
  Returns:
 	1 : succeed.
@@ -152,10 +56,10 @@ int Sloong::Universal::CUniversal::CheckFileDirectory(string filePath)
 
 #ifndef _WINDOWS
 	char spliter = '/';
-	replace(filePath,"\\","/");
+	Helper::Replace(filePath,"\\","/");
 #else
 	char spliter = '\\';
-	replace(filePath,"/","\\");
+	Helper::Replace(filePath,"/","\\");
 #endif
 	
 	auto find_index = filePath.find_last_of(spliter);
@@ -164,9 +68,9 @@ int Sloong::Universal::CUniversal::CheckFileDirectory(string filePath)
 	
 	string path = filePath.substr(0,find_index);
 	#ifndef _WINDOWS 
-		RunSystemCmd(CUniversal::Format("mkdir -p %s",path));
+		RunSystemCmd(Helper::Format("mkdir -p %s",path));
 	#else
-		RunSystemCmd(CUniversal::Format("mkdir %s",path));
+		RunSystemCmd(Helper::Format("mkdir %s",path));
 	#endif
 
 	// no have write access.
@@ -210,38 +114,11 @@ bool Sloong::Universal::CUniversal::MoveFile(string lpExistingFileName, string l
 			return 0;
 		}
 
-		if (RunSystemCmd(CUniversal::Format("mv %s %s", lpExistingFileName.c_str(), lpNewFileName.c_str())))
+		if (RunSystemCmd(Helper::Format("mv %s %s", lpExistingFileName.c_str(), lpNewFileName.c_str())))
 			return 1;
 	}
 	return 0;*/
 #endif
-}
-
-string Sloong::Universal::CUniversal::toansi(const wstring& str)
-{
-	string strResult;
-	int nLen = (int)str.size();
-	LPSTR szMulti = new char[nLen + 1];
-	memset(szMulti, 0, nLen + 1);
-	// use the c standard library function to convert
-	wcstombs(szMulti, str.c_str(), nLen);
-	strResult = szMulti;
-	delete[] szMulti;
-	return strResult;
-
-
-}
-
-wstring Sloong::Universal::CUniversal::toutf(const string& str)
-{
-	wstring strResult;
-	int nLen = (int)str.size();
-	LPWSTR strWide = new WCHAR[nLen + 1];
-	memset(strWide, 0, sizeof(TCHAR)*(nLen + 1));
-	mbstowcs(strWide, str.c_str(), nLen);
-	strResult = strWide;
-	delete[] strWide;
-	return strResult;
 }
 
 
@@ -318,17 +195,7 @@ bool Sloong::Universal::CUniversal::RunSystemCmd(const string& cmd)
 #endif
 }
 
-std::string Sloong::Universal::CUniversal::BinaryToHex(const unsigned char* buf, int len)
-{
-	std::string NewString = "";
-	char tmp[3] = {0};
-	for (int i = 0; i < len; i++)
-	{
-		snprintf(tmp, 3, "%02x", buf[i]);
-		NewString = NewString + tmp;
-	}
-	return NewString;
-}
+
 
 int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSize, int nStart, bool bAgain)
 {
@@ -487,18 +354,6 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSiz
 	return nIsRecv;
 }
 
-std::string Sloong::Universal::CUniversal::Replace(const string& str, const string& src, const string& dest)
-{
-	string res = str;
-	for (string::size_type pos(0); pos != string::npos; pos += dest.length())
-	{
-		if ((pos = str.find(src, pos)) != string::npos)
-			res.replace(pos, src.length(), dest);
-		else
-			break;
-	}
-	return  res;
-}
 
 
 #ifdef _WINDOWS

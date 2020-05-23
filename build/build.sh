@@ -52,13 +52,12 @@ copy_file(){
 	mkdir -p $OUTPATH
 	cp -f $SCRIPTFOLDER/$MAKEFLAG/libuniv.so $OUTPATH/libuniv.so
 	mkdir -p $OUTPATH/include/univ/
-	cp -f $SCRIPTFOLDER/../univ/*.h $OUTPATH/include/univ/
+	cp -f $SCRIPTFOLDER/../univ/*.h* $OUTPATH/include/univ/
 	cp -f $SCRIPTFOLDER/install.sh $OUTPATH/install.sh
 }
 
 build_debug(){
 	MAKEFLAG=debug
-	clean
 	build
 }
 

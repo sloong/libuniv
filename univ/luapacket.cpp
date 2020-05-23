@@ -58,7 +58,7 @@ int CLuaPacket::setdata(lua_State *L)
     string key, value;
     if(lua_isnumber(L,1))
     {
-        key = CUniversal::ntos(PAI(L,1));
+        key = Helper::ntos(PAI(L,1));
     }
     else
     {
@@ -100,7 +100,7 @@ int CLuaPacket::getdata(lua_State *L)
     string key;
     if(lua_isnumber(L,1))
     {
-        key = CUniversal::ntos(PAI(L,1));
+        key = Helper::ntos(PAI(L,1));
     }
     else
         key = string(PAS(L,1));
