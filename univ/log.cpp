@@ -19,28 +19,10 @@ const string g_strConnect = "-------Network log system connected-------";
 #define PATH_SEPARATOR '\\'
 #endif // !_WINDOWS
 
-WCHAR g_szFormatBuffer[2048];
-
-Sloong::Universal::CLog::CLog()
+void Sloong::Universal::CLog::Log(const string &strErrorText, const string &strTitle, DWORD dwCode /* = 0 */, bool bFormatSysMsg /* = false */)
 {
-	m_bInit = false;
-	m_nLastDate = 0;
-	m_pFile = nullptr;
-	m_pCustomFunction = nullptr;
-}
+	WriteLine(Helper::Format("[%s]:[%s]", strTitle.c_str(), strErrorText.c_str()));
 
-
-Sloong::Universal::CLog::~CLog()
-{
-	End();
-	m_bInit = false;
-}
-
-
-void Sloong::Universal::CLog::Log(const string& strErrorText, const string& strTitle, DWORD dwCode /* = 0 */, bool bFormatSysMsg /* = false */)
-{
-    WriteLine(Helper::Format("[%s]:[%s]", strTitle.c_str(), strErrorText.c_str()));
-		
 	if (bFormatSysMsg)
 	{
 		DWORD dwSysCode;
@@ -59,11 +41,9 @@ void Sloong::Universal::CLog::Log(const string& strErrorText, const string& strT
 			WriteLine(str);
 		}
 	}
-	
 }
 
-
-void Sloong::Universal::CLog::Log(const string& strErrorText, LOGLEVEL level)
+void Sloong::Universal::CLog::Log(const string &strErrorText, LOGLEVEL level)
 {
 	switch (level)
 	{
@@ -73,229 +53,141 @@ void Sloong::Universal::CLog::Log(const string& strErrorText, LOGLEVEL level)
 	case LOGLEVEL::Debug:
 		Debug(strErrorText);
 		break;
-		case LOGLEVEL::Error:
-			Error(strErrorText);
-			break;
-		case LOGLEVEL::Fatal:
-			Fatal(strErrorText);
-			break;
-		case LOGLEVEL::Info:
-			Info(strErrorText);
-			break;
-		case LOGLEVEL::Verbos:
-			Verbos(strErrorText);
-			break;
-		case LOGLEVEL::Warn:
-			Warn(strErrorText);
-			break;
+	case LOGLEVEL::Error:
+		Error(strErrorText);
+		break;
+	case LOGLEVEL::Fatal:
+		Fatal(strErrorText);
+		break;
+	case LOGLEVEL::Info:
+		Info(strErrorText);
+		break;
+	case LOGLEVEL::Verbos:
+		Verbos(strErrorText);
+		break;
+	case LOGLEVEL::Warn:
+		Warn(strErrorText);
+		break;
 	default:
 		break;
 	}
 }
 
-void Sloong::Universal::CLog::WriteLine(const string& szLog)
+void Sloong::Universal::CLog::Write(const string &szMessage)
 {
-	if (szLog.empty())
-		return;
-
-	time_t st;
-    time(&st);
-	struct tm* lt = localtime(&st);
-	Write(Helper::Format("[%d/%d/%d-%.2d:%.2d:%.2d]:%s\n",(lt->tm_year + 1900) , lt->tm_mon , lt->tm_mday ,
-		lt->tm_hour, lt->tm_min, lt->tm_sec,szLog.c_str()));
-}
-
-void Sloong::Universal::CLog::Write(const string& szMessage)
-{
-	unique_lock <mutex> list_lock(m_oLogListMutex);
-	m_waitWriteList.push(szMessage);
+	lock_guard<mutex> list_lock(m_mutexLogCache);
+	m_listLogCache.push(szMessage);
 	m_CV.notify_all();
 }
 
-
 void CLog::ProcessLogList()
 {
-	unique_lock <mutex> list_lock(m_oWriteMutex);
-	while (!m_logList.empty())
+	lock_guard<mutex> list_lock(m_mutexLogPool);
+	while (!m_listLogPool.empty())
 	{
 		// get log message from queue.
-		string str = m_logList.front();
-		m_logList.pop();
-		if( m_emOperation & LOGOPT::WriteToSTDOut)
+		string str = m_listLogPool.front();
+		m_listLogPool.pop();
+		if (m_emOperation & LOGOPT::WriteToSTDOut)
 			cout << str;
-		if( (m_emOperation & LOGOPT::WriteToFile )&& m_pFile != nullptr )
+		if ((m_emOperation & LOGOPT::WriteToFile) && m_pFile != nullptr)
 			fputs(str.c_str(), m_pFile);
-		if( m_emOperation & LOGOPT::ImmediatelyFlush)
+		if (m_emOperation & LOGOPT::ImmediatelyFlush)
 			Flush();
-		if( (m_emOperation & LOGOPT::WriteToCustomFunction) && m_pCustomFunction != nullptr )
+		if ((m_emOperation & LOGOPT::WriteToCustomFunction) && m_pCustomFunction != nullptr)
 			m_pCustomFunction(str);
 	}
 }
 
 void CLog::LogSystemWorkLoop()
 {
-	unique_lock <mutex> lck(m_Mutex);
 	while (m_emStatus != RUN_STATUS::Exit)
 	{
 		if (m_emStatus == RUN_STATUS::Created)
 			continue;
 
-		if( !IsOpen())
+		if (!IsOpen())
 		{
-			m_CV.wait_for(lck,chrono::milliseconds(500));
+			m_CV.wait_for(lck, chrono::milliseconds(500));
 			continue;
 		}
 
-		if (m_waitWriteList.empty() && m_logList.empty())
+		if (m_listLogCache.empty() && m_listLogPool.empty())
 		{
-			m_CV.wait_for(lck,chrono::milliseconds(10));
+			m_CV.wait_for(lck, chrono::milliseconds(10));
 			continue;
 		}
 
-		ProcessWaitList();	
+		ProcessWaitList();
 		ProcessLogList();
 	}
 }
 
-
 void CLog::ProcessWaitList()
 {
-	if (!m_waitWriteList.empty())
+	if (!m_listLogCache.empty())
 	{
-		unique_lock <mutex> list_lock(m_oLogListMutex);
-		while (!m_waitWriteList.empty())
+		lock_guard<mutex> list_lock(m_mutexLogCache);
+		lock_guard<mutex> list_lock2(m_mutexLogPool);
+		while (!m_listLogCache.empty())
 		{
-			m_logList.push(m_waitWriteList.front());
-			m_waitWriteList.pop();
+			m_listLogPool.push(m_listLogCache.front());
+			m_listLogCache.pop();
 		}
-		list_lock.unlock();
 	}
 }
 
 bool Sloong::Universal::CLog::OpenFile()
 {
-	if(!(m_emOperation & LOGOPT::WriteToFile))
+	if (!m_bInit)
+		Initialize();
+	if (!(m_emOperation & LOGOPT::WriteToFile))
 		return true;
-	if (m_pFile != nullptr )
+	if (m_pFile != nullptr)
 		return true;
 	if (m_szFileName.empty())
 		throw normal_except("Open log file failed.file name is empty.");
 
 	cout << "Open log file. Path>>" << m_szFileName << endl;
-	
+
 	CUniversal::CheckFileDirectory(m_szFileName);
 	auto flag = "a+";
-	if ( m_emOperation & LOGOPT::AlwaysCreate )
+	if (m_emOperation & LOGOPT::AlwaysCreate)
 		flag = "w+";
 
 	int err_code;
 #ifdef _WINDOWS
 	err_code = fopen_s(&m_pFile, m_szFileName.c_str(), flag);
 #else
-	m_pFile = fopen(m_szFileName.c_str(),flag);
+	m_pFile = fopen(m_szFileName.c_str(), flag);
 	err_code = errno;
 #endif
-	if ( m_pFile == nullptr)
+	if (m_pFile == nullptr)
 	{
 		cerr << "Open file error. error no " << err_code << endl;
 	}
 	return m_pFile != nullptr;
 }
 
-void Sloong::Universal::CLog::RegisterCustomFunction( pCustomLogFunction func )
-{
-	if( func != nullptr )
-	{
-		m_pCustomFunction = func;
-		m_emOperation = (LOGOPT)(m_emOperation | LOGOPT::WriteToCustomFunction);
-	}
-}
-
-string Sloong::Universal::CLog::GetFileName()
-{
-	return m_szFileName;
-}
-
-bool Sloong::Universal::CLog::IsOpen()
-{
-	if (!m_bInit)
-		throw normal_except("No Initialize!");
-	if(!(m_emOperation & LOGOPT::WriteToFile))
-		return true;
-	if ( m_emType != LOGTYPE::ONEFILE)
-	{
-		time_t now;
-		struct tm* tmNow;
-		time(&now);
-		tmNow = localtime(&now);
-		
-		if ((m_nLastDate != tmNow->tm_mday) || m_nLastDate == 0 )
-		{
-			char szCurrentDate[10];
-			static const char format[3][10] = { ("%Y"), ("%Y-%m"), ("%Y%m%d") };
-			strftime(szCurrentDate, 9, format[m_emType], tmNow);
-			m_szFileName = Helper::Format("%s%s%s.log", m_szFilePath.c_str(), szCurrentDate, m_strExtendName.c_str());
-			m_nLastDate = tmNow->tm_mday;
-			Close();
-		}
-	}
-
-	return OpenFile();
-}
-
-void Sloong::Universal::CLog::Close()
-{
-	if (m_pFile!= nullptr)
-	{
-		fclose(m_pFile);
-		m_pFile = nullptr;
-	}
-}
-
-
 void Sloong::Universal::CLog::End()
 {
-	if ( !m_bInit || m_emStatus == RUN_STATUS::Exit )
+	if (!m_bInit || m_emStatus == RUN_STATUS::Exit)
 		return;
 	m_emStatus = RUN_STATUS::Exit;
 	WriteLine(g_strEnd);
-	if(IsOpen())
+	if (IsOpen())
 	{
 		ProcessWaitList();
 		ProcessLogList();
-		Flush();
 		Close();
 	}
 }
 
-
-string Sloong::Universal::CLog::GetPath()
+void CLog::SetConfiguration(const string &szFileName, const string &strExtendName, LOGLEVEL *pLevel, LOGOPT *pOpt)
 {
-	return m_szFilePath;
-}
-
-
-/************************************************************************/
-/* Flush function                                                       */
-/* Add for issue #9 [https://git.sloong.com/public/library/issues/9]    */
-/************************************************************************/
-void Sloong::Universal::CLog::Flush()
-{
-	if( m_pFile != nullptr)
-		fflush(m_pFile);
-}
-
-void CLog::SetConfiguration(const string& szFileName, const string& strExtendName , LOGTYPE* pType, LOGLEVEL* pLevel, LOGOPT* pOpt )
-{
-	if (pType)
-	{
-		m_emType = *pType;
-		WriteLine(Helper::Format("[Info]:[Set log file type to %d]",m_emType));
-	}
-
 	if (!szFileName.empty())
 	{
-		if ( m_emType != LOGTYPE::ONEFILE)
+		if (m_emType != LOGTYPE::ONEFILE)
 		{
 			m_szFilePath = Helper::Replace(szFileName, "/", Helper::ntos(PATH_SEPARATOR));
 			m_szFilePath = Helper::Replace(szFileName, "\\", Helper::ntos(PATH_SEPARATOR));
@@ -313,47 +205,36 @@ void CLog::SetConfiguration(const string& szFileName, const string& strExtendNam
 		}
 	}
 
-	if( strExtendName.size() > 0 )
+	if (strExtendName.size() > 0)
 	{
 		m_strExtendName = strExtendName;
-		WriteLine(Helper::Format("[Info]:[Set extend name to %d]",m_strExtendName));
+		WriteLine(Helper::Format("[Info]:[Set extend name to %d]", m_strExtendName));
 	}
-	
 
 	if (pLevel)
 	{
 		m_emLevel = *pLevel;
-		WriteLine(Helper::Format("[Info]:[Set log level to %d]",m_emLevel));
+		WriteLine(Helper::Format("[Info]:[Set log level to %d]", m_emLevel));
 	}
 
-	if( pOpt )
+	if (pOpt)
 	{
 		m_emOperation = *pOpt;
-		WriteLine(Helper::Format("[Info]:[Set Operation to %d]",m_emOperation));
+		WriteLine(Helper::Format("[Info]:[Set Operation to %d]", m_emOperation));
 	}
-
 }
 
-void Sloong::Universal::CLog::Initialize()
-{
-	Initialize("./log.log");
-}
-
-void Sloong::Universal::CLog::Initialize(const string& szPathName, const string& strExtendName /*= ""*/, LOGOPT emOpt /*= WriteToFile */, LOGLEVEL emLevel /*= LOGLEVEL::All*/, LOGTYPE emType /*= LOGTYPE::ONEFILE*/)
+void Sloong::Universal::CLog::Initialize(const string &szPathName, const string &strExtendName /*= ""*/, LOGOPT emOpt /*= WriteToFile */, LOGLEVEL emLevel /*= LOGLEVEL::All*/, LOGTYPE emType /*= LOGTYPE::ONEFILE*/)
 {
 	// All value init
 	m_bInit = true;
 	m_szFilePath.clear();
 	m_szFileName.clear();
+	m_emType = emType;
 
-    SetConfiguration( szPathName, strExtendName, &emType, &emLevel, &emOpt );
+	SetConfiguration(szPathName, strExtendName, &emType, &emLevel, &emOpt);
 
 	Start();
-}
-
-bool Sloong::Universal::CLog::IsInitialize()
-{
-	return m_bInit;
 }
 
 void Sloong::Universal::CLog::Start()
@@ -362,57 +243,54 @@ void Sloong::Universal::CLog::Start()
 		return;
 
 	m_emStatus = RUN_STATUS::Running;
-	std::function<void(void)> workLoop = std::bind(&CLog::LogSystemWorkLoop, this);
-	m_pThread = make_unique<thread>(workLoop);
+	CThreadPool::AddWorkThread(std::bind(&CLog::LogSystemWorkLoop, this));
+	if (m_emType != LOGTYPE::ONEFILE)
+		CThreadPool::AddWorkThread(std::bind(&CLog::FileNameUpdateWorkLoop, this));
+
 	WriteLine(g_strStart);
 }
 
-void Sloong::Universal::CLog::Info(const string& strMsg)
+string Sloong::Universal::CLog::BuildFileName()
 {
-	if (m_emLevel > LOGLEVEL::Info)
-		return;
-	Log(strMsg, "Info");
+	if( m_emType == LOGTYPE::ONEFILE )
+		return "log.log";
+	time_t now;
+	struct tm *tmNow;
+	time(&now);
+	tmNow = localtime(&now);
+
+	char szCurrentDate[10];
+	static const char format[3][10] = {("%Y"), ("%Y-%m"), ("%Y%m%d")};
+	strftime(szCurrentDate, 9, format[m_emType], tmNow);
+	return Helper::Format("%s%s%s.log", m_szFilePath.c_str(), szCurrentDate, m_strExtendName.c_str());
 }
 
-void Sloong::Universal::CLog::Warn(const string& strMsg)
+void Sloong::Universal::CLog::FileNameUpdateWorkLoop()
 {
-	if (m_emLevel > LOGLEVEL::Warn)
-		return;
-	Log(strMsg, "Warn");
-}
+	while (m_emStatus != RUN_STATUS::Exit)
+	{
+		time_t now;
+		struct tm *tmNow;
+		time(&now);
+		tmNow = localtime(&now);
 
-void Sloong::Universal::CLog::Error(const string& strMsg)
-{
-	if (m_emLevel > LOGLEVEL::Error)
-		return;
-	Log(strMsg, "Error");
-}
+		if ((m_nLastDate != tmNow->tm_mday) || m_nLastDate == 0)
+		{
+			m_szFileName = BuildFileName();
+			m_nLastDate = tmNow->tm_mday;
+			Close();
+		}
 
-void Sloong::Universal::CLog::Assert(const string& strMsg)
-{
-	if (m_emLevel > LOGLEVEL::Assert)
-		return;
-	Log(strMsg, "Assert");
-}
+		if (tmNow->tm_hour != 23)
+			this_thread::sleep_for(chrono::hours(23 - tmNow->tm_hour));
 
-void Sloong::Universal::CLog::Fatal(const string& strMsg)
-{
-	if (m_emLevel > LOGLEVEL::Fatal)
-		return;
-	Log(strMsg, "Fatal");
-}
+		if (tmNow->tm_min != 59)
+			this_thread::sleep_for(chrono::minutes(59 - tmNow->tm_min));
 
-void Sloong::Universal::CLog::Verbos(const string& strMsg)
-{
-	if (m_emLevel > LOGLEVEL::Verbos)
-		return;
-	Log(strMsg, "Verbos");
-}
+		if (tmNow->tm_sec != 59)
+			this_thread::sleep_for(chrono::seconds(59 - tmNow->tm_min));
 
-
-void Sloong::Universal::CLog::Debug(const string& strMsg)
-{
-	if (m_emLevel > LOGLEVEL::Debug)
-		return;
-	Log(strMsg, "Debug");
+		if (m_nLastDate == tmNow->tm_mday)
+			this_thread::sleep_for(chrono::milliseconds(100));
+	}
 }

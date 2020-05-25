@@ -1,7 +1,6 @@
 #ifndef LOG_H
 #define LOG_H
 
-
 #include "univ.h"
 #include <condition_variable>
 
@@ -18,7 +17,7 @@ namespace Sloong
 			MONTH = 1,
 			DAY = 2,
 			ONEFILE = 3
-		}LOGTYPE;
+		} LOGTYPE;
 
 		typedef enum _emLogLevel
 		{
@@ -30,7 +29,7 @@ namespace Sloong
 			Error = 5,
 			Assert = 6,
 			Fatal = 7,
-		}LOGLEVEL;
+		} LOGLEVEL;
 
 		typedef enum _emLogOperation
 		{
@@ -41,67 +40,141 @@ namespace Sloong
 			ImmediatelyFlush = 1 << 2,
 			AlwaysCreate = 1 << 3,
 			WriteToCustomFunction = 1 << 4,
-		}LOGOPT;
-		
+		} LOGOPT;
+
 		typedef std::function<void(string)> pCustomLogFunction;
 
 		class UNIVERSAL_API CLog
 		{
 		public:
-			CLog();
-			~CLog();
+			CLog() {}
+			~CLog()
+			{
+				End();
+				m_bInit = false;
+			}
 
-			virtual void Initialize();
-			virtual void Initialize(const string& szPathName,  const string& strExtendName = "", LOGOPT emOpt = LOGOPT::WriteToFile, LOGLEVEL emLevel = LOGLEVEL::All, LOGTYPE emType = LOGTYPE::ONEFILE);
-			virtual void Start();
-			virtual void End();
-			virtual void Write(const string& szMessage);
-			virtual void WriteLine(const string& szLog);
-			virtual void Log(const string& strErrorText, const string& strTitle , DWORD dwCode = 0 , bool bFormatSysMsg = false);
-			virtual void Log(const string& strErrorText, LOGLEVEL level);
-			virtual void Verbos(const string& strMsg);
-			virtual void Debug(const string& strMsg);
-			virtual void Info(const string& strInfo);
-			virtual void Warn(const string& strMsg);
-			virtual void Error(const string& strMsg);
-			virtual void Assert(const string& strMsg);
-			virtual void Fatal(const string& strMsg);
-			virtual void SetConfiguration(const string& szFileName, const string& strExtendName , LOGTYPE* pType, LOGLEVEL* pLevel, LOGOPT* emOpt);
-			virtual bool IsOpen();
-			virtual void Close();
-			virtual string GetFileName();
-			virtual string GetPath();
-			virtual bool IsInitialize();
-			virtual void Flush();
-			virtual void RegisterCustomFunction( pCustomLogFunction func );
+			inline void Initialize()
+			{
+				Initialize("./log.log");
+			}
+			void Initialize(const string &szPathName, const string &strExtendName = "", LOGOPT emOpt = LOGOPT::WriteToSTDOut, LOGLEVEL emLevel = LOGLEVEL::All);
+			void Start();
+			void End();
+			void Write(const string &szMessage);
+			inline void WriteLine(const string &szLog)
+			{
+				if (!szLog.empty())
+					Write(Helper::Format("[%s]:%s\n", Helper::FormatDatetime().c_str(), szLog.c_str()));
+			}
+			void Log(const string &strErrorText, const string &strTitle, DWORD dwCode = 0, bool bFormatSysMsg = false);
+			void Log(const string &strErrorText, LOGLEVEL level);
+			inline void Verbos(const string &strMsg)
+			{
+				if (m_emLevel <= LOGLEVEL::Verbos)
+					Log(strMsg, "Verbos");
+			}
+			inline void Debug(const string &strMsg)
+			{
+				if (m_emLevel <= LOGLEVEL::Debug)
+					Log(strMsg, "Debug");
+			}
+
+			inline void Info(const string &strInfo)
+			{
+				if (m_emLevel <= LOGLEVEL::Info)
+					Log(strMsg, "Info");
+			}
+			inline void Warn(const string &strMsg)
+			{
+				if (m_emLevel <= LOGLEVEL::Warn)
+					Log(strMsg, "Warn");
+			}
+			inline void Error(const string &strMsg)
+			{
+				if (m_emLevel <= LOGLEVEL::Error)
+					Log(strMsg, "Error");
+			}
+			inline void Assert(const string &strMsg)
+			{
+				if (m_emLevel <= LOGLEVEL::Assert)
+					Log(strMsg, "Assert");
+			}
+			inline void Fatal(const string &strMsg)
+			{
+				if (m_emLevel <= LOGLEVEL::Fatal)
+					Log(strMsg, "Fatal");
+			}
+
+			void SetConfiguration(const string &szFileName, const string &strExtendName, LOGTYPE *pType, LOGLEVEL *pLevel, LOGOPT *emOpt);
+			inline bool IsOpen()
+			{
+				if (!(m_emOperation & LOGOPT::WriteToFile))
+					return true;
+				return OpenFile();
+			}
+			inline void Close()
+			{
+				Flush();
+				if (m_pFile != nullptr)
+				{
+					fclose(m_pFile);
+					m_pFile = nullptr;
+				}
+			}
+			
+			inline string GetFileName()
+			{
+				return m_szFileName;
+			}
+
+			inline string GetPath()
+			{
+				return m_szFilePath;
+			}
+
+			inline bool IsInitialize() { return m_bInit; }
+			inline void Flush()
+			{
+				if (m_pFile != nullptr)
+					fflush(m_pFile);
+			}
+			inline void RegisterCustomFunction(pCustomLogFunction func)
+			{
+				if (func != nullptr)
+				{
+					m_pCustomFunction = func;
+					m_emOperation = (LOGOPT)(m_emOperation | LOGOPT::WriteToCustomFunction);
+				}
+			}
+
 		protected:
 			void ProcessWaitList();
 			void ProcessLogList();
 			bool OpenFile();
 			void LogSystemWorkLoop();
-			static LPVOID AcceptNetlogLoop(LPVOID param);
+			void FileNameUpdateWorkLoop();
+			string BuildFileName();
+
 		protected:
-			LOGLEVEL	m_emLevel;
-			LOGOPT		m_emOperation;
-			pCustomLogFunction m_pCustomFunction;
-			FILE*		m_pFile = nullptr;
-			string		m_szFilePath;
-			string		m_szFileName;
-			string			m_strExtendName;
-			int		m_nLastDate=0;
-			LOGTYPE		m_emType;
-			bool		m_bInit = false;
+			LOGLEVEL m_emLevel;
+			LOGOPT m_emOperation;
+			pCustomLogFunction m_pCustomFunction = nullptr;
+			FILE *m_pFile = nullptr;
+			string m_szFilePath;
+			string m_szFileName;
+			string m_strExtendName;
+			int m_nLastDate = 0;
+			LOGTYPE m_emType;
+			bool m_bInit = false;
 			condition_variable m_CV;
-			mutex		m_Mutex;
-			mutex		m_oLogListMutex;
-			mutex		m_oWriteMutex;
-			RUN_STATUS	m_emStatus;
-			queue<string>	m_logList;
-			queue<string>	m_waitWriteList;
-			unique_ptr<thread>		m_pThread = nullptr;
+			mutex m_mutexLogCache;
+			mutex m_mutexLogPool;
+			RUN_STATUS m_emStatus;
+			queue<string> m_listLogPool;
+			queue<string> m_listLogCache;
 		};
-	}
-}
+	} // namespace Universal
+} // namespace Sloong
 
 #endif // !LOG_H
-
