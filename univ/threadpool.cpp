@@ -198,7 +198,7 @@ int Sloong::Universal::CThreadPool::AddWorkThread(std::function<void(SMARTER)> p
 
 
 
-int Sloong::Universal::CThreadPool::AddWorkThread(std::function<void(void)> pJob, int nNum/* = 1*/)
+int Sloong::Universal::CThreadPool::AddWorkThread(std::function<void()> pJob, int nNum/* = 1*/)
 {
 	int nIndex = CThreadPool::m_pThreadList.size();
 	for (int i = 0; i < nNum; i++)

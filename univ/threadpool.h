@@ -76,9 +76,9 @@ namespace Sloong
             // thread index is base on return value.
             static int AddWorkThread(LPTASKFUNC pJob, LPVOID pParam = nullptr, int nNum = 1);
 
-			static int AddWorkThread(std::function<void(SMARTER)> pJob, SMARTER pParam = nullptr, int nNum = 1);
+			static int AddWorkThread(std::function<void(SMARTER)> pJob, SMARTER pParam, int nNum = 1);
 
-			static int AddWorkThread(std::function<void(void)> pJob, int nNum = 1);
+			static int AddWorkThread(std::function<void()> pJob, int nNum = 1);
 
 		protected:
 			static map<ULONG, shared_ptr<TaskParam>>	m_oJobList;

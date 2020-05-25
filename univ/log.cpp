@@ -106,13 +106,13 @@ void CLog::LogSystemWorkLoop()
 
 		if (!IsOpen())
 		{
-			m_CV.wait_for(lck, chrono::milliseconds(500));
+			this_thread::sleep_for(chrono::milliseconds(500));
 			continue;
 		}
 
 		if (m_listLogCache.empty() && m_listLogPool.empty())
 		{
-			m_CV.wait_for(lck, chrono::milliseconds(10));
+			this_thread::sleep_for(chrono::milliseconds(10));
 			continue;
 		}
 
@@ -181,7 +181,7 @@ void Sloong::Universal::CLog::End()
 	}
 }
 
-void CLog::SetConfiguration(const string &szFileName, const string &strExtendName, LOGLEVEL *pLevel, LOGOPT *pOpt)
+void Sloong::Universal::CLog::SetConfiguration(const string &szFileName, const string &strExtendName, LOGLEVEL *pLevel, LOGOPT *pOpt)
 {
 	if (!szFileName.empty())
 	{
@@ -230,7 +230,7 @@ void Sloong::Universal::CLog::Initialize(const string &szPathName, const string 
 	m_szFileName.clear();
 	m_emType = emType;
 
-	SetConfiguration(szPathName, strExtendName, &emType, &emLevel, &emOpt);
+	SetConfiguration(szPathName, strExtendName, &emLevel, &emOpt);
 
 	Start();
 }

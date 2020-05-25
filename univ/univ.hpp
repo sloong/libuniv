@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sys/time.h>
 #define SOCKET int
 #endif
 
@@ -219,13 +220,12 @@ namespace Sloong
             struct timeval current;
             gettimeofday(&current, NULL);
             return current;
-            auto cur = current.tv_sec * 1000 + current.tv_usec / 1000;
         }
 
         static inline string FormatDatetime()
         {
-            auto cur = CurrentDateTime();
-            auto ts = localtime(&cur.tv_sec);
+            auto cur = CurrentDatetime();
+            auto lt = localtime(&cur.tv_sec);
             return Helper::Format("%d/%d/%d-%d:%d:%d.%.4d", (lt->tm_year + 1900), lt->tm_mon, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, cur.tv_usec / 1000);
         }
 

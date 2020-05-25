@@ -52,7 +52,7 @@ namespace Sloong
 			bool RunScript(const string &strFileName);
 			bool RunBuffer(LPCSTR pBuffer, size_t sz);
 			bool RunString(const string &strCommand);
-
+			void PushPacket(CLuaPacket *pData);
 			bool RunFunction(string strFunctionName, CLuaPacket *pUserInfo, CLuaPacket *pRequest, CLuaPacket *pResponse);
 			int RunFunction(string strFunctionName, CLuaPacket *pUserInfo, string &strRequest, string &strResponse);
 			void RunFunction(string strFunctionName, CLuaPacket *pUserInfo);
@@ -66,13 +66,13 @@ namespace Sloong
 		public:
 			inline bool RunFunction(const string &strFunctionName, const string &args) { return RunString(Helper::Format("%s(%s)", strFunctionName.c_str(), args.c_str())); }
 			inline void HandlerError(const string &strErrorType, const string &strCmd) { HandlerError(strErrorType, strCmd.c_str()); }
-			inline string GetString(int nNum, const string &strDefault = "") { return GetString(m_pScriptContext, num, pDefault); }
-			double GetDouble(int nNum, double dDefault = -1.0f) { return GetDouble(m_pScriptContext, num, dDefault); }
+			inline string GetString(int nNum, const string &strDefault = "") { return GetString(m_pScriptContext, nNum, strDefault); }
+			double GetDouble(int nNum, double dDefault = -1.0f) { return GetDouble(m_pScriptContext, nNum, dDefault); }
 			inline int GetInteger(int nNum, int nDef = -1) { return GetInteger(m_pScriptContext, nNum, nDef); }
 			inline bool GetBoolen(int nNum) { return GetBoolen(m_pScriptContext, nNum); }
 			inline void *GetPointer(int nNum) { return GetPointer(m_pScriptContext, nNum); }
-			inline void PushString(const string &strString) { PushString(m_pScriptContext, pString); }
-			inline void PushDouble(double dValue) { CLua::PushDouble(m_pScriptContext, value); }
+			inline void PushString(const string &strString) { PushString(m_pScriptContext, strString); }
+			inline void PushDouble(double dValue) { CLua::PushDouble(m_pScriptContext, dValue); }
 			inline void PushInteger(int nValue) { PushInteger(m_pScriptContext, nValue); }
 			inline void SetErrorHandle(ErrorHandleType pErr) { m_pErrorHandler = pErr; }
 			inline lua_State *GetScriptContext() { return m_pScriptContext; }
@@ -88,13 +88,8 @@ namespace Sloong
 				for (auto item : *pFuncList)
 					AddFunction(item.strFunctionName, item.pFunction);
 			}
-			inline void PushPacket(CLuaPacket *pData)
-			{
-				if (pData)
-					Lunar<CLuaPacket>::push(m_pScriptContext, pData, false);
-				else
-					lua_pushnil(m_pScriptContext);
-			}
+			
+			
 			inline bool PushFunction(const string &strFuncName)
 			{
 				int nFunc = 0;
@@ -112,7 +107,7 @@ namespace Sloong
 					m_strScriptFolder += '/';
 				}
 			}
-			inline vector<string>* GetSearchRouteList(){ return m_listSearchRoute; }
+			inline vector<string>* GetSearchRouteList(){ return &m_listSearchRoute; }
 
 			// Static functions.
 		public:
@@ -123,6 +118,7 @@ namespace Sloong
 			static void *GetPointer(lua_State *l, int nNum);
 			static void PushString(lua_State *l, const string &strString);
 			static void PushDouble(lua_State *l, double dValue);
+			static void PushNil(lua_State *l);
 			static void PushInteger(lua_State *l, int nValue);
 			static void PushBoolen(lua_State *l, bool b);
 			static void PushPointer(lua_State *l, void *pPointer);

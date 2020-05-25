@@ -58,7 +58,8 @@ namespace Sloong
 			{
 				Initialize("./log.log");
 			}
-			void Initialize(const string &szPathName, const string &strExtendName = "", LOGOPT emOpt = LOGOPT::WriteToSTDOut, LOGLEVEL emLevel = LOGLEVEL::All);
+			void Initialize(const string &, const string & = "", LOGOPT = LOGOPT::WriteToSTDOut, LOGLEVEL = LOGLEVEL::All, LOGTYPE = LOGTYPE::ONEFILE);
+			void SetConfiguration(const string &, const string &, LOGLEVEL *, LOGOPT *);
 			void Start();
 			void End();
 			void Write(const string &szMessage);
@@ -80,7 +81,7 @@ namespace Sloong
 					Log(strMsg, "Debug");
 			}
 
-			inline void Info(const string &strInfo)
+			inline void Info(const string &strMsg)
 			{
 				if (m_emLevel <= LOGLEVEL::Info)
 					Log(strMsg, "Info");
@@ -105,8 +106,6 @@ namespace Sloong
 				if (m_emLevel <= LOGLEVEL::Fatal)
 					Log(strMsg, "Fatal");
 			}
-
-			void SetConfiguration(const string &szFileName, const string &strExtendName, LOGTYPE *pType, LOGLEVEL *pLevel, LOGOPT *emOpt);
 			inline bool IsOpen()
 			{
 				if (!(m_emOperation & LOGOPT::WriteToFile))
@@ -122,17 +121,9 @@ namespace Sloong
 					m_pFile = nullptr;
 				}
 			}
-			
-			inline string GetFileName()
-			{
-				return m_szFileName;
-			}
 
-			inline string GetPath()
-			{
-				return m_szFilePath;
-			}
-
+			inline string GetFileName() { return m_szFileName; }
+			inline string GetPath() { return m_szFilePath; }
 			inline bool IsInitialize() { return m_bInit; }
 			inline void Flush()
 			{

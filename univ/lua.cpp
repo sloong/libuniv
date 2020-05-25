@@ -78,14 +78,13 @@ bool CLua::RunBuffer(LPCSTR pBuffer, size_t sz)
 {
 	if (0 != luaL_loadbuffer(m_pScriptContext, (LPCSTR)pBuffer, sz, NULL))
 	{
-		HandlerError("Load Buffer", string(pBuffer));
+		HandlerError("Load Buffer", pBuffer);
 		return false;
 	}
 
 	if (0 != lua_pcall(m_pScriptContext, 0, LUA_MULTRET, 0))
 	{
-		std::string str(pBuffer);
-		HandlerError("Run Buffer", str);
+		HandlerError("Run Buffer", pBuffer);
 		return false;
 	}
 	return true;
@@ -206,6 +205,11 @@ void CLua::PushString(lua_State *l, const string &strString)
 void CLua::PushDouble(lua_State *l, double dValue)
 {
 	lua_pushnumber(l, dValue);
+}
+
+void CLua::PushNil(lua_State *l)
+{
+	lua_pushnil(l);
 }
 
 LuaType CLua::CheckType(int index)
@@ -340,7 +344,6 @@ unique_ptr<map<std::string, std::string>> Sloong::Universal::CLua::GetTableParam
 	// 现在的栈：-1 => nil; index => table
 	if (index >= lua_gettop(l))
 	{
-		HandlerError("GetTableParam", "The index is too big.");
 		return nullptr;
 	}
 
@@ -361,5 +364,13 @@ unique_ptr<map<std::string, std::string>> Sloong::Universal::CLua::GetTableParam
 	}
 	// 现在的栈：index => table （最后 lua_next 返回 0 的时候它已经把上一次留下的 key 给弹出了）
 	// 所以栈已经恢复到进入这个函数时的状态
-	return std::move(data);
+	return data;
+}
+
+void Sloong::Universal::CLua::PushPacket(CLuaPacket *pData)
+{
+	if (pData)
+		Lunar<CLuaPacket>::push(m_pScriptContext, pData, false);
+	else
+		PushNil(m_pScriptContext);
 }
