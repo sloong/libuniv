@@ -192,7 +192,7 @@ int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char *buf, int nSiz
 		// socket is closed
 		else if (nSentSize == 0)
 		{
-			return -200;
+			return 0;
 		}
 
 		nNosendSize -= nSentSize;
@@ -240,7 +240,7 @@ int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char *buf, int nSize, boo
 		// socket is closed
 		else if (nRecv == 0)
 		{
-			return -200;
+			return 0;
 		}
 		nNoRecv -= nRecv;
 		nIsRecv += nRecv;
@@ -269,7 +269,7 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char *buf, int nSize
 		if (error == 0)
 		{
 			// timeout
-			return 0;
+			return -200;
 		}
 		else if (FD_ISSET(sock, &reset))
 		{
@@ -301,7 +301,7 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char *buf, int nSize
 			// socket is closed
 			else if (nRecv == 0)
 			{
-				return -200;
+				return 0;
 			}
 		}
 		else
