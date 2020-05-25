@@ -10,7 +10,6 @@ using namespace Sloong;
 
 const string g_strStart = "---------------------------------Start---------------------------------";
 const string g_strEnd = "----------------------------------End----------------------------------";
-const string g_strConnect = "-------Network log system connected-------";
 
 #ifndef _WINDOWS
 #include <errno.h>
