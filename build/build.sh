@@ -29,6 +29,7 @@ cd $SCRIPTFOLDER
 VERSION_STR=$(cat $SCRIPTFOLDER/../version)
 PROJECT=libuniv
 MAKEFLAG=debug
+CMAKEFLAG=Debug
 CMAKE_FILE_PATH=$SCRIPTFOLDER/../univ
 OUTPATH=$SCRIPTFOLDER/$MAKEFLAG/v$VERSION_STR
 
@@ -41,7 +42,7 @@ build(){
 		mkdir $MAKEFLAG
 	fi
 	cd $MAKEFLAG
-	cmake -DCMAKE_BUILD_TYPE=$MAKEFLAG $CMAKE_FILE_PATH
+	cmake -DCMAKE_BUILD_TYPE=$CMAKEFLAG $CMAKE_FILE_PATH
 	make
 	cd ../
 	copy_file
@@ -58,11 +59,13 @@ copy_file(){
 
 build_debug(){
 	MAKEFLAG=debug
+	CMAKEFLAG=Debug
 	build
 }
 
 build_release(){
 	MAKEFLAG=release
+	CMAKEFLAG=Release
 	clean
 	build
 }
