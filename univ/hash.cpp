@@ -2,12 +2,11 @@
 #include <assert.h>
 #include <openssl/sha.h>
 #include <openssl/md5.h>
-#include "exception.h"
 #include "hash.h"
 
 using namespace Sloong::Universal;
 
-void CMD5::Binary_Encode(string str, unsigned char(&md)[MD5_LENGTH], bool bFile)
+void CMD5::Binary_Encode(const string& str, unsigned char(&md)[MD5_LENGTH], bool bFile)
 {
 	if (bFile)
 	{
@@ -31,7 +30,7 @@ void CMD5::Binary_Encode(string str, unsigned char(&md)[MD5_LENGTH], bool bFile)
 
 
 
-string CMD5::Encode(string str, bool bFile /*= false*/)
+string CMD5::Encode(const string& str, bool bFile /*= false*/)
 {
 	unsigned char md5[MD5_LENGTH] = { 0 };
 
@@ -41,7 +40,7 @@ string CMD5::Encode(string str, bool bFile /*= false*/)
 
 
 
-string Sloong::Universal::CSHA1::Encode(string str_src, bool file )
+string Sloong::Universal::CSHA1::Encode(const string& str_src, bool file )
 {
 	unsigned char mdStr[SHA1_LENGTH] = { 0 };
 	Binary_Encoding(str_src, mdStr);
@@ -73,7 +72,7 @@ void Sloong::Universal::CSHA1::Binary_Encoding(const string& str_src, unsigned c
 }
 
 
-string Sloong::Universal::CSHA256::Encode(string str_src, bool file )
+string Sloong::Universal::CSHA256::Encode(const string& str_src, bool file )
 {
 	unsigned char mdStr[SHA256_LENGTH] = { 0 };
 	Binary_Encoding(str_src, mdStr);
@@ -104,7 +103,7 @@ void Sloong::Universal::CSHA256::Binary_Encoding(const string& str_src, unsigned
 	}
 }
 
-string Sloong::Universal::CSHA512::Encode(string str_src, bool file)
+string Sloong::Universal::CSHA512::Encode(const string& str_src, bool file)
 {
 	unsigned char mdStr[SHA512_LENGTH] = { 0 };
 	Binary_Encoding(str_src, mdStr);

@@ -13,15 +13,10 @@
 using namespace std;
 using namespace Sloong::Universal;
 
-typedef map<int, string> MSGMAP;
-MSGMAP g_MessageMap;
-
 wstring CUniversal::Version()
 {
 	return VERSION_LEGALCOPYRIGHT;
 }
-
-bool g_bIsInst = false;
 
 void CUniversal::CopyStringToPoint(LPSTR &lpTarget, LPCSTR lpFrom)
 {
@@ -47,7 +42,7 @@ void CUniversal::CopyStringToPoint(LPWSTR &lpTarget, LPCWSTR lpFrom)
 	0 : path error
 	-1 : No write access.
 */
-int Sloong::Universal::CUniversal::CheckFileDirectory(string filePath)
+int Sloong::Universal::CUniversal::CheckFileDirectory(const string& filePath)
 {
 	if (filePath == "")
 		return 0;
@@ -89,32 +84,7 @@ Remarks:
 		2> check new file foder exist and write access.
 		3> run 'mv' system cmd and check result. */
 /************************************************************************/
-bool Sloong::Universal::CUniversal::MoveFile(string lpExistingFileName, string lpNewFileName)
-{
-#ifdef _WINDOWS
-	return ::MoveFileA(lpExistingFileName.c_str(), lpNewFileName.c_str()) != FALSE;
-#else
-	return rename(lpExistingFileName.c_str(), lpNewFileName.c_str()) == 0;
-	/*if (lpExistingFileName == "" || lpNewFileName == "")
-	{
-		return 0;
-	}
 
-	// check org file exist.
-	if (0 == ACCESS(lpExistingFileName.c_str(), R_OK))
-	{
-		string strDir = CheckFileDirectory(lpNewFileName);
-		if (strDir == "")
-		{
-			return 0;
-		}
-
-		if (RunSystemCmd(Helper::Format("mv %s %s", lpExistingFileName.c_str(), lpNewFileName.c_str())))
-			return 1;
-	}
-	return 0;*/
-#endif
-}
 
 string Sloong::Universal::CUniversal::RunSystemCmdAndGetResult(const string &strCmd)
 {

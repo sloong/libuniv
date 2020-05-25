@@ -72,7 +72,7 @@ int CLuaPacket::setdata(lua_State *L)
     return 1;
 }
 
-void CLuaPacket::SetData(string key, string value)
+void CLuaPacket::SetData(const string& key, const string& value)
 {
     if( key.empty() )
     {
@@ -121,7 +121,7 @@ int CLuaPacket::getdata(lua_State *L)
 }
 
 
-string CLuaPacket::GetData(string key, string def )
+string CLuaPacket::GetData(const string& key, const string& def )
 {
     if( true == Exist(key) ){
         return m_oDataMap[key];
@@ -136,7 +136,7 @@ shared_ptr<vector<string>> Sloong::Universal::CLuaPacket::GetChangedItems()
 	return m_oChangeList;
 }
 
-bool CLuaPacket::Exist(string key)
+bool CLuaPacket::Exist(const string& key)
 {
     if( m_oDataMap.find(key) != m_oDataMap.end() ){
         return true;
@@ -156,24 +156,4 @@ void Sloong::Universal::CLuaPacket::ConfirmChange()
 {
 	m_oChangeList->clear();
 }
- /*
-//binary_iarchive
-void CLuaPacket::ParseFromString( string& str )
-{
-    std::stringstream ss;
-    ss << str;
-    //boost::archive::text_iarchive iarch(ss);
-    //boost::archive::binary_iarchive iarch(ss);
-    //iarch >> m_oDataMap;
-}
-//binary_oarchive
-string CLuaPacket::SerializeToString()
-{
-    std::stringstream ss;
-    //boost::archive::text_oarchive oarch(ss);
-    //boost::archive::binary_oarchive oarch(ss);
-    //oarch << m_oDataMap;
-    return ss.str();
-}*/
-
 

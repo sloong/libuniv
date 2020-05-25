@@ -1,7 +1,6 @@
 #ifndef SLOONGNET_HELPER_H
 #define SLOONGNET_HELPER_H
 
-
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -218,16 +217,28 @@ namespace Sloong
         static inline timeval CurrentDatetime()
         {
             struct timeval current;
-            gettimeofday( &current, NULL );
+            gettimeofday(&current, NULL);
             return current;
-            auto cur = current.tv_sec*1000+current.tv_usec/1000;
+            auto cur = current.tv_sec * 1000 + current.tv_usec / 1000;
         }
 
         static inline string FormatDatetime()
         {
             auto cur = CurrentDateTime();
             auto ts = localtime(&cur.tv_sec);
-            return Helper::Format("%d/%d/%d-%d:%d:%d.%.4d",(lt->tm_year + 1900) , lt->tm_mon , lt->tm_mday ,lt->tm_hour, lt->tm_min, lt->tm_sec, cur.tv_usec/1000 );
+            return Helper::Format("%d/%d/%d-%d:%d:%d.%.4d", (lt->tm_year + 1900), lt->tm_mon, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, cur.tv_usec / 1000);
+        }
+
+        /// Move file
+        /// Return values
+        ///   return true if move file succeeded. else return false.
+        static inline bool MoveFile(const string &lpExistingFileName, const string &lpNewFileName)
+        {
+#ifdef _WINDOWS
+            return ::MoveFileA(lpExistingFileName.c_str(), lpNewFileName.c_str()) != FALSE;
+#else
+            return rename(lpExistingFileName.c_str(), lpNewFileName.c_str()) == 0;
+#endif
         }
     };
 } // namespace Sloong
