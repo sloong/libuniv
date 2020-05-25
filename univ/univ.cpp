@@ -9,13 +9,12 @@
 #include "version.h"
 #include <assert.h>
 #include "exception.h"
-
+#include <sys/time.h>
 using namespace std;
 using namespace Sloong::Universal;
 
 typedef map<int, string> MSGMAP;
 MSGMAP g_MessageMap;
-
 
 wstring CUniversal::Version()
 {
@@ -24,7 +23,7 @@ wstring CUniversal::Version()
 
 bool g_bIsInst = false;
 
-void CUniversal::CopyStringToPoint(LPSTR& lpTarget, LPCSTR lpFrom)
+void CUniversal::CopyStringToPoint(LPSTR &lpTarget, LPCSTR lpFrom)
 {
 	SAFE_DELETE_ARR(lpTarget);
 	int nLength = (int)strlen(lpFrom);
@@ -33,7 +32,7 @@ void CUniversal::CopyStringToPoint(LPSTR& lpTarget, LPCSTR lpFrom)
 	strncpy(lpTarget, lpFrom, nLength);
 }
 
-void CUniversal::CopyStringToPoint(LPWSTR& lpTarget, LPCWSTR lpFrom)
+void CUniversal::CopyStringToPoint(LPWSTR &lpTarget, LPCWSTR lpFrom)
 {
 	SAFE_DELETE_ARR(lpTarget);
 	int nLength = (int)wcslen(lpFrom);
@@ -41,7 +40,6 @@ void CUniversal::CopyStringToPoint(LPWSTR& lpTarget, LPCWSTR lpFrom)
 	assert(lpTarget);
 	wcsncpy(lpTarget, lpFrom, nLength);
 }
-
 
 /*
  Returns:
@@ -56,22 +54,22 @@ int Sloong::Universal::CUniversal::CheckFileDirectory(string filePath)
 
 #ifndef _WINDOWS
 	char spliter = '/';
-	Helper::Replace(filePath,"\\","/");
+	Helper::Replace(filePath, "\\", "/");
 #else
 	char spliter = '\\';
-	Helper::Replace(filePath,"/","\\");
+	Helper::Replace(filePath, "/", "\\");
 #endif
-	
+
 	auto find_index = filePath.find_last_of(spliter);
-	if( string::npos == find_index )
+	if (string::npos == find_index)
 		return 0;
-	
-	string path = filePath.substr(0,find_index);
-	#ifndef _WINDOWS 
-		RunSystemCmd(Helper::Format("mkdir -p %s",path));
-	#else
-		RunSystemCmd(Helper::Format("mkdir %s",path));
-	#endif
+
+	string path = filePath.substr(0, find_index);
+#ifndef _WINDOWS
+	RunSystemCmd(Helper::Format("mkdir -p %s", path));
+#else
+	RunSystemCmd(Helper::Format("mkdir %s", path));
+#endif
 
 	// no have write access.
 	if (0 != ACCESS(path.c_str(), W_OK))
@@ -80,9 +78,6 @@ int Sloong::Universal::CUniversal::CheckFileDirectory(string filePath)
 	}
 	return 1;
 }
-
-
-
 
 /************************************************************************/
 /* Move File Function for Windows and Linux
@@ -93,7 +88,7 @@ Remarks:
 		1> check org file exist and read access.
 		2> check new file foder exist and write access.
 		3> run 'mv' system cmd and check result. */
-		/************************************************************************/
+/************************************************************************/
 bool Sloong::Universal::CUniversal::MoveFile(string lpExistingFileName, string lpNewFileName)
 {
 #ifdef _WINDOWS
@@ -121,7 +116,6 @@ bool Sloong::Universal::CUniversal::MoveFile(string lpExistingFileName, string l
 #endif
 }
 
-
 string Sloong::Universal::CUniversal::RunSystemCmdAndGetResult(const string &strCmd)
 {
 #ifdef _WINDOWS
@@ -129,46 +123,45 @@ string Sloong::Universal::CUniversal::RunSystemCmdAndGetResult(const string &str
 #else
 	char buf[10240] = {0};
 	FILE *pf = NULL;
-	
-	if( (pf = popen(strCmd.c_str(), "r")) == NULL )
+
+	if ((pf = popen(strCmd.c_str(), "r")) == NULL)
 	{
 		return "";
 	}
- 
+
 	string strResult;
-	while(fgets(buf, sizeof buf, pf))
+	while (fgets(buf, sizeof buf, pf))
 	{
 		strResult += buf;
 	}
-	
+
 	pclose(pf);
- 
-	unsigned int iSize =  strResult.size();
-	if(iSize > 0 && strResult[iSize - 1] == '\n')  // linux
+
+	unsigned int iSize = strResult.size();
+	if (iSize > 0 && strResult[iSize - 1] == '\n') // linux
 	{
 		strResult = strResult.substr(0, iSize - 1);
 	}
- 
+
 	return strResult;
 #endif
 }
-
 
 /************************************************************************/
 /*			Run System Cmd Function
 Returns:
 	return true if run succeed. else return false.						*/
 /************************************************************************/
-bool Sloong::Universal::CUniversal::RunSystemCmd(const string& cmd)
+bool Sloong::Universal::CUniversal::RunSystemCmd(const string &cmd)
 {
 #ifdef _WINDOWS
 	return system(cmd.c_str()) == 0;
 #else
-	sighandler_t old_handler;  
-  
-	old_handler = signal(SIGCHLD, SIG_DFL);  
+	sighandler_t old_handler;
+
+	old_handler = signal(SIGCHLD, SIG_DFL);
 	int res = system(cmd.c_str());
-	signal(SIGCHLD, old_handler);  
+	signal(SIGCHLD, old_handler);
 	if (-1 == res)
 	{
 		cerr << "Run cmd error, system return -1. cmd:[" << cmd << "]" << endl;
@@ -195,9 +188,7 @@ bool Sloong::Universal::CUniversal::RunSystemCmd(const string& cmd)
 #endif
 }
 
-
-
-int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSize, int nStart, bool bAgain)
+int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char *buf, int nSize, int nStart, bool bAgain)
 {
 	int nAllSent = nStart;
 	int nSentSize = nStart;
@@ -213,23 +204,23 @@ int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSi
 			return -1;
 #else
 			// if errno != EAGAIN or again for error and return is -1, return false
-			if (errno == EAGAIN || errno == EINTR )
+			if (errno == EAGAIN || errno == EINTR)
 			{
-				if( bAgain == true && nSentSize > 0 )
+				if (bAgain == true && nSentSize > 0)
 					continue;
-				else if(bAgain == false &&nSentSize > 0)
+				else if (bAgain == false && nSentSize > 0)
 					return nSentSize;
 				else
-					return 0-errno;
+					return 0 - errno;
 			}
 			else
 			{
-					return 0-errno;
+				return 0 - errno;
 			}
 #endif // _WINDOWS
 		}
 		// socket is closed
-		else if ( nSentSize == 0 )
+		else if (nSentSize == 0)
 		{
 			return -200;
 		}
@@ -240,7 +231,7 @@ int Sloong::Universal::CUniversal::SendEx(SOCKET sock, const char * buf, int nSi
 	return nAllSent;
 }
 
-int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char * buf, int nSize, bool bAgain)
+int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char *buf, int nSize, bool bAgain)
 {
 	if (nSize <= 0)
 		return 0;
@@ -248,7 +239,7 @@ int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char * buf, int nSize, bo
 	int nIsRecv = 0;
 	int nNoRecv = nSize;
 	int nRecv = 0;
-	char* pBuf = buf;
+	char *pBuf = buf;
 	while (nIsRecv < nSize)
 	{
 		nRecv = recv(sock, pBuf + nSize - nNoRecv, nNoRecv, 0);
@@ -267,17 +258,17 @@ int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char * buf, int nSize, bo
 				else if (bAgain == false && nIsRecv > 0)
 					return nIsRecv;
 				else
-					return 0-errno;
+					return 0 - errno;
 			}
 			// In other erros case, return directly.
 			else
 			{
-				return 0-errno;
+				return 0 - errno;
 			}
 #endif // _WINDOWS
 		}
 		// socket is closed
-		else if ( nRecv == 0 )
+		else if (nRecv == 0)
 		{
 			return -200;
 		}
@@ -287,7 +278,7 @@ int Sloong::Universal::CUniversal::RecvEx(SOCKET sock, char * buf, int nSize, bo
 	return nIsRecv;
 }
 
-int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSize, int nTimeout, bool bAgain)
+int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char *buf, int nSize, int nTimeout, bool bAgain)
 {
 	if (nSize <= 0)
 		return 0;
@@ -295,7 +286,7 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSiz
 	int nIsRecv = 0;
 	int nNoRecv = nSize;
 	int nRecv = 0;
-	char* pBuf = buf;
+	char *pBuf = buf;
 	fd_set reset;
 	struct timeval tv;
 	FD_ZERO(&reset);
@@ -328,17 +319,17 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSiz
 					else if (bAgain == false && nIsRecv > 0)
 						return nIsRecv;
 					else
-						return 0-errno;
+						return 0 - errno;
 				}
 				// In other erros case, return directly.
 				else
 				{
-					return 0-errno;
+					return 0 - errno;
 				}
 #endif // _WINDOWS
 			}
 			// socket is closed
-			else if ( nRecv == 0 )
+			else if (nRecv == 0)
 			{
 				return -200;
 			}
@@ -346,7 +337,7 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSiz
 		else
 		{
 			// other error
-			return -200-errno;
+			return -200 - errno;
 		}
 		nNoRecv -= nRecv;
 		nIsRecv += nRecv;
@@ -354,15 +345,13 @@ int Sloong::Universal::CUniversal::RecvTimeout(SOCKET sock, char * buf, int nSiz
 	return nIsRecv;
 }
 
-
-
 #ifdef _WINDOWS
 // Remarks:
 //		Format the windows error message
 wstring CUniversal::FormatWindowsErrorMessage(DWORD dwErrCode)
 {
 	wstring strError;
-	TCHAR szErr[1024] = { 0 };
+	TCHAR szErr[1024] = {0};
 	DWORD systemLocale = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
 	DWORD dwLength = 0;
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dwErrCode, systemLocale, szErr, 1024, NULL);
@@ -387,12 +376,12 @@ inline CSize::CSize(
 
 inline CSize::CSize(_In_ SIZE initSize) throw()
 {
-	*(SIZE*)this = initSize;
+	*(SIZE *)this = initSize;
 }
 
 inline CSize::CSize(_In_ POINT initPt) throw()
 {
-	*(POINT*)this = initPt;
+	*(POINT *)this = initPt;
 }
 
 inline CSize::CSize(_In_ DWORD dwSize) throw()
@@ -456,7 +445,6 @@ inline CPoint CSize::operator-(_In_ POINT point) const throw()
 	return CPoint(cx - point.x, cy - point.y);
 }
 
-
 // CPoint
 inline CPoint::CPoint() throw()
 {
@@ -474,12 +462,12 @@ inline CPoint::CPoint(
 
 inline CPoint::CPoint(_In_ POINT initPt) throw()
 {
-	*(POINT*)this = initPt;
+	*(POINT *)this = initPt;
 }
 
 inline CPoint::CPoint(_In_ SIZE initSize) throw()
 {
-	*(SIZE*)this = initSize;
+	*(SIZE *)this = initSize;
 }
 
 inline CPoint::CPoint(_In_ LPARAM dwPoint) throw()
@@ -575,31 +563,25 @@ inline CSize CPoint::operator-(_In_ POINT point) const throw()
 	return CSize(x - point.x, y - point.y);
 }
 
-
-
-
-inline CRect CSize::operator+(_In_ const RECT* lpRect) const throw()
+inline CRect CSize::operator+(_In_ const RECT *lpRect) const throw()
 {
 	return CRect(lpRect) + *this;
 }
 
-inline CRect CSize::operator-(_In_ const RECT* lpRect) const throw()
+inline CRect CSize::operator-(_In_ const RECT *lpRect) const throw()
 {
 	return CRect(lpRect) - *this;
 }
 
-
-
-inline CRect CPoint::operator+(_In_ const RECT* lpRect) const throw()
+inline CRect CPoint::operator+(_In_ const RECT *lpRect) const throw()
 {
 	return CRect(lpRect) + *this;
 }
 
-inline CRect CPoint::operator-(_In_ const RECT* lpRect) const throw()
+inline CRect CPoint::operator-(_In_ const RECT *lpRect) const throw()
 {
 	return CRect(lpRect) - *this;
 }
-
 
 // CRect
 inline CRect::CRect() throw()
@@ -622,7 +604,7 @@ inline CRect::CRect(
 	bottom = b;
 }
 
-inline CRect::CRect(_In_ const RECT& srcRect) throw()
+inline CRect::CRect(_In_ const RECT &srcRect) throw()
 {
 	::CopyRect(this, &srcRect);
 }
@@ -665,24 +647,24 @@ inline CSize CRect::Size() const throw()
 	return CSize(right - left, bottom - top);
 }
 
-inline CPoint& CRect::TopLeft() throw()
+inline CPoint &CRect::TopLeft() throw()
 {
-	return *((CPoint*)this);
+	return *((CPoint *)this);
 }
 
-inline CPoint& CRect::BottomRight() throw()
+inline CPoint &CRect::BottomRight() throw()
 {
-	return *((CPoint*)this + 1);
+	return *((CPoint *)this + 1);
 }
 
-inline const CPoint& CRect::TopLeft() const throw()
+inline const CPoint &CRect::TopLeft() const throw()
 {
-	return *((CPoint*)this);
+	return *((CPoint *)this);
 }
 
-inline const CPoint& CRect::BottomRight() const throw()
+inline const CPoint &CRect::BottomRight() const throw()
 {
-	return *((CPoint*)this + 1);
+	return *((CPoint *)this + 1);
 }
 
 inline CPoint CRect::CenterPoint() const throw()
@@ -839,17 +821,17 @@ inline BOOL CRect::UnionRect(
 	return ::UnionRect(this, lpRect1, lpRect2);
 }
 
-inline void CRect::operator=(_In_ const RECT& srcRect) throw()
+inline void CRect::operator=(_In_ const RECT &srcRect) throw()
 {
 	::CopyRect(this, &srcRect);
 }
 
-inline BOOL CRect::operator==(_In_ const RECT& rect) const throw()
+inline BOOL CRect::operator==(_In_ const RECT &rect) const throw()
 {
 	return ::EqualRect(this, &rect);
 }
 
-inline BOOL CRect::operator!=(_In_ const RECT& rect) const throw()
+inline BOOL CRect::operator!=(_In_ const RECT &rect) const throw()
 {
 	return !::EqualRect(this, &rect);
 }
@@ -884,12 +866,12 @@ inline void CRect::operator-=(_In_ LPCRECT lpRect) throw()
 	DeflateRect(lpRect);
 }
 
-inline void CRect::operator&=(_In_ const RECT& rect) throw()
+inline void CRect::operator&=(_In_ const RECT &rect) throw()
 {
 	::IntersectRect(this, this, &rect);
 }
 
-inline void CRect::operator|=(_In_ const RECT& rect) throw()
+inline void CRect::operator|=(_In_ const RECT &rect) throw()
 {
 	::UnionRect(this, this, &rect);
 }
@@ -936,14 +918,14 @@ inline CRect CRect::operator-(_In_ LPCRECT lpRect) const throw()
 	return rect;
 }
 
-inline CRect CRect::operator&(_In_ const RECT& rect2) const throw()
+inline CRect CRect::operator&(_In_ const RECT &rect2) const throw()
 {
 	CRect rect;
 	::IntersectRect(&rect, this, &rect2);
 	return rect;
 }
 
-inline CRect CRect::operator|(_In_ const RECT& rect2) const throw()
+inline CRect CRect::operator|(_In_ const RECT &rect2) const throw()
 {
 	CRect rect;
 	::UnionRect(&rect, this, &rect2);
@@ -1026,4 +1008,3 @@ inline CRect CRect::MulDiv(
 }
 
 #endif // _WINDOWS
-

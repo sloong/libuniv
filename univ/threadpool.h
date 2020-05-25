@@ -17,18 +17,18 @@ namespace Sloong
 	{
 		/// C style define
 		typedef LPVOID(*pTaskJobFunc)(LPVOID);
-		typedef void(*pTaskCallBack)(long long, LPVOID);
+		typedef void(*pTaskCallBack)(int64_t, LPVOID);
 		typedef pTaskJobFunc LPTASKFUNC;
 		typedef pTaskCallBack LPTASKCALLBACK;
 
 		/// C++ std style define 
 		typedef shared_ptr<void> SMARTER;
 		typedef SMARTER(*pSmartJobFunc)(SMARTER);
-		typedef void(*pSmartCallBack)(long long, SMARTER);
+		typedef void(*pSmartCallBack)(int64_t, SMARTER);
 		typedef pSmartJobFunc LPSMARTFUNC;
 		typedef pSmartCallBack LPSMARTCALLBACK;
 		typedef std::function<SMARTER(SMARTER)> SmartFunction;
-		typedef std::function<SMARTER(long long,SMARTER)> SmartCallbackFunction;
+		typedef std::function<SMARTER(int64_t,SMARTER)> SmartCallbackFunction;
 		enum TaskType {
 			Normal,
 			SmartParam,
@@ -77,6 +77,8 @@ namespace Sloong
             static int AddWorkThread(LPTASKFUNC pJob, LPVOID pParam = nullptr, int nNum = 1);
 
 			static int AddWorkThread(std::function<void(SMARTER)> pJob, SMARTER pParam = nullptr, int nNum = 1);
+
+			static int AddWorkThread(std::function<void(void)> pJob, int nNum = 1);
 
 		protected:
 			static map<ULONG, shared_ptr<TaskParam>>	m_oJobList;
