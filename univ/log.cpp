@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "univ.h"
 #include "log.h"
-#include "exception.h"
 #include "threadpool.h"
 using namespace Sloong;
 
@@ -145,8 +144,8 @@ bool Sloong::Universal::CLog::OpenFile()
 	if (m_pFile != nullptr)
 		return true;
 	if (m_szFileName.empty())
-		throw normal_except("Open log file failed.file name is empty.");
-
+		m_szFileName = BuildFileName();
+		
 	cout << "Open log file. Path>>" << m_szFileName << endl;
 
 	CUniversal::CheckFileDirectory(m_szFileName);
