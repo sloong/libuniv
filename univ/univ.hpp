@@ -164,14 +164,14 @@ namespace Sloong
             memcpy(buf, (void *)&ul_len, 4);
         }
 
-        static inline uint64_t BytesToInt64(char *point)
+        static inline uint64_t BytesToInt64(const char *point)
         {
             uint64_t netLen = 0;
             memcpy(&netLen, point, 8);
             return ntohll(netLen);
         }
 
-        static inline uint32_t BytesToInt32(char *point)
+        static inline uint32_t BytesToInt32(const char *point)
         {
             uint32_t netLen = 0;
             memcpy(&netLen, point, 4);
@@ -213,6 +213,21 @@ namespace Sloong
             strResult = strWide;
             delete[] strWide;
             return strResult;
+        }
+
+        static inline timeval CurrentDatetime()
+        {
+            struct timeval current;
+            gettimeofday( &current, NULL );
+            return current;
+            auto cur = current.tv_sec*1000+current.tv_usec/1000;
+        }
+
+        static inline string FormatDatetime()
+        {
+            auto cur = CurrentDateTime();
+            auto ts = localtime(&cur.tv_sec);
+            return Helper::Format("%d/%d/%d-%d:%d:%d.%.4d",(lt->tm_year + 1900) , lt->tm_mon , lt->tm_mday ,lt->tm_hour, lt->tm_min, lt->tm_sec, cur.tv_usec/1000 );
         }
     };
 } // namespace Sloong
