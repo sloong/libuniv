@@ -1,28 +1,33 @@
-# Library - power by sloong.com
-开源的通用库，封装了一些常用函数。加快开发速度和效率
+# libuniv - powered by sloong.com
+A cross-platform universal operation library. Provides frequently operations for C++ development in a very easy-to-use format. Includes non-blocking high performance log libraries, thread pools, Base64, Hash, Lua and more.
 
 ***
-## Language 
-[English](https://github.com/soaringloong/sloongnet/blob/develop/README_EN.md)
+## Language
+[中文](https://github.com/sloong/libuniv/README_CN.md)
 
-## 概述
-* 基于C++编写
-* 支持Windows和Linux系统
+## Overview
+* Base on C++
+* Without Boost library
+* Cross-platform. Tested on Windows and Debian
 
 
-## 功能特性
-* 对std::string进行便捷封装
-* 对常用函数增加Windows和Linux自动兼容
+## Feature
+* Easy-to-use std::string.
+* Easy-to-ues thread and support add one-off jobs.
+* Non-blocking high performance log libraries
+* Easy-to-ues hash compute. Support MD5, SHA1, SHA256.
+* Easy-to-use Base64, Blowfish, 3DES.
+* Easy-to-use Lua.
 
-## 更新历史
-[点击查看](https://git.sloong.com/public/library/src/master/ChangeLog.md)
 
-## 联系我们
-如果有任何问题，请联系我们。
+## Support
+Any question pelase add issue.
 
-* [Email](wcb@sloong.com)
-
-* Develop Request
+## Develop
+### Install environmen
 ```
-sudo apt installl make gcc g++ libboost-dev libssl-dev liblua5.3-dev
+./build/environment.sh
 ```
+
+### Build
+	./build/build.sh -d
