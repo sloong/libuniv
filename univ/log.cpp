@@ -75,7 +75,7 @@ void Sloong::Universal::CLog::Write(const string &szMessage)
 {
 	lock_guard<mutex> list_lock(m_mutexLogCache);
 	m_listLogCache.push(szMessage);
-	m_CV.notify_all();
+	m_Sync.notify_all();
 }
 
 void CLog::ProcessLogList()
@@ -112,7 +112,7 @@ void CLog::LogSystemWorkLoop()
 
 		if (m_listLogCache.empty() && m_listLogPool.empty())
 		{
-			this_thread::sleep_for(chrono::milliseconds(10));
+			m_Sync.wait_for(chrono::seconds(1));
 			continue;
 		}
 
@@ -279,14 +279,8 @@ void Sloong::Universal::CLog::FileNameUpdateWorkLoop()
 			Close();
 		}
 
-		if (tmNow->tm_hour != 23)
-			this_thread::sleep_for(chrono::hours(23 - tmNow->tm_hour));
-
-		if (tmNow->tm_min != 59)
-			this_thread::sleep_for(chrono::minutes(59 - tmNow->tm_min));
-
-		if (tmNow->tm_sec != 59)
-			this_thread::sleep_for(chrono::seconds(59 - tmNow->tm_min));
+		if (tmNow->tm_hour != 23 || tmNow->tm_min != 59 || tmNow->tm_sec != 59)
+			this_thread::sleep_for( chrono::seconds(1) );
 
 		if (m_nLastDate == tmNow->tm_mday)
 			this_thread::sleep_for(chrono::milliseconds(100));
